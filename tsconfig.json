@@ -1,0 +1,20 @@
+ {
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "removeComments": false,
+    "sourceMap": true,
+    "target": "es5",
+    "outDir": "dist",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "strict": true,
+    "module": "esnext",
+    "noEmitOnError": true,
+    "lib": [
+      "es2018",
+      "DOM"
+    ],
+    "esModuleInterop": false,
+  },
+  "include": ["src"],
+}

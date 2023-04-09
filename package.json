@@ -1,0 +1,44 @@
+{
+  "type": "module",
+  "name": "mobx-react-query",
+  "version": "1.0.0",
+  "description": "a wrapper that allows you to convenietly use react-query features with mobx",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsc --watch",
+    "_clear": "rimraf dist/*",
+    "tsc": "tsc",
+    "_make-bundle": "rollup -c",
+    "build": "run-s _clear _make-bundle",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mobx-react-query",
+    "react-query",
+    "mobx-async",
+    "mobx-query"
+  ],
+  "author": "RudikS",
+  "license": "MIT",
+  "dependencies": {
+    "mobx": "^6.9.0",
+    "react-query": "^3.39.3"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "npm-run-all": "^4.1.5",
+    "rollup": "^3.20.2",
+    "rollup-plugin-dts": "^5.3.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RudikS-git/mobx-react-query"
+  }
+}
