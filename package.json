@@ -24,6 +24,7 @@
     "pub": "yarn build && yarn publish --access public",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": ["dist"],
   "keywords": [
     "mobx-react-query",
     "react-query",
