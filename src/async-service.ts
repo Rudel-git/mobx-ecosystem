@@ -11,7 +11,7 @@ import {
   QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
-} from 'react-query/core';
+} from 'react-query';
 
 type OnErrorCallback = ((error: ServerError) => void) | undefined;
 
