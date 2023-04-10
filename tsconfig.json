@@ -1,5 +1,6 @@
  {
   "compilerOptions": {
+    "baseUrl": "src",
     "moduleResolution": "node",
     "removeComments": false,
     "sourceMap": true,
