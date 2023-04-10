@@ -17,7 +17,7 @@ export default [
         sourcemap: false,
       }
     ],
-    external: ['mobx', 'react-query'],
+    external: ['mobx', '@tanstack/react-query'],
     plugins: [
       external(), 
       // resolve(),
