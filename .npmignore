@@ -7,3 +7,5 @@
 /metadata.d.ts
 /rollup.config.js
 /tsconfig.json
+/dist
+/examples
