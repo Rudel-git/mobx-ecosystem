@@ -114,7 +114,7 @@ export class AsyncService {
   }
 
   get isIdle() {
-    return !this.queryResult || this.queryResult.fetchStatus === 'idle';
+    return !this.queryResult || this.queryResult.status === 'loading';
   }
 
   /**
