@@ -35,8 +35,8 @@ type AsyncServiceMethodOptions =
   | { hasToast: boolean; rejectable: boolean }
   | undefined;
 
-type ServerErrorResponse = Record<string, any>;
-type ServerError = ServerErrorResponse;
+export type ServerErrorResponse = Record<string, any>;
+export type ServerError = ServerErrorResponse;
 
 export let queryClient = new QueryClient({
   defaultOptions: {
