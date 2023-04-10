@@ -70,6 +70,8 @@ export const configureAsyncService = (options: AsyncServiceConfiguration) => {
   }
 }
 
+const queryResultInitial: QueryObserverResult = { status: 'loading' } as QueryObserverResult;
+
 
 /**
  * При необходимости добавить QueriesObserver по аналогии для нескольких запросов для подтягивания данных
@@ -77,7 +79,7 @@ export const configureAsyncService = (options: AsyncServiceConfiguration) => {
 export class AsyncService {
   queryClient: QueryClient;
 
-  queryResult: QueryObserverResult = { status: 'loading' } as QueryObserverResult;
+  queryResult: QueryObserverResult = queryResultInitial;
   mutationResult?: MutationObserverResult<
     unknown,
     ServerError,
@@ -200,7 +202,7 @@ export class AsyncService {
       rejectable: true,
     },
   ) => {
-    this.queryResult = undefined;
+    this.queryResult = queryResultInitial;
     this.isQueryLoading = false;
 
     // тут начинаем лоадер
@@ -272,7 +274,7 @@ export class AsyncService {
       rejectable: true,
     },
   ) => {
-    this.queryResult = undefined;
+    this.queryResult = queryResultInitial;
     this.isQueryLoading = false;
 
     const _params = {
@@ -288,7 +290,13 @@ export class AsyncService {
     observer.subscribe(
       (result: InfiniteQueryObserverResult<unknown, unknown> | undefined) => {
         runInAction(() => {
-          this.queryResult = result;
+          if(result) {
+            this.queryResult = result;
+          }
+          else {
+            this.queryResult = queryResultInitial;
+          }
+
           this.isQueryLoading = Boolean(result?.isLoading);
           this.isQueryFetching = Boolean(result?.isFetching);
           this.isFetchingNextPage = Boolean(result?.isFetchingNextPage);
