@@ -19,7 +19,7 @@ export default [
     ],
     external: ['mobx', 'react-query'],
     plugins: [
-      // external(), 
+      external(), 
       // resolve(),
       typescript({ tsconfig: `./tsconfig.json` }), 
       terser()
