@@ -1,6 +1,7 @@
-To install:
-npm:
+## Installation
+```bash
 npm install @mobx-ecosystem/mobx-react-query mobx react-query
 
-yarn:
+
 yarn add @mobx-ecosystem/mobx-react-query mobx react-query
+```

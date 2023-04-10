@@ -11,7 +11,7 @@ import {
   QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
-} from 'react-query';
+} from '@tanstack/react-query';
 
 type OnErrorCallback = ((error: ServerError) => void) | undefined;
 
@@ -114,7 +114,7 @@ export class AsyncService {
   }
 
   get isIdle() {
-    return !this.queryResult || this.queryResult.status === 'idle';
+    return !this.queryResult || this.queryResult.fetchStatus === 'idle';
   }
 
   /**
@@ -238,7 +238,11 @@ export class AsyncService {
       // onSuccess будет вызываться всегда 1 раз
       // 1 вариант - getOptimisticResult вызовет его, если это запрос. Наш вызов не сработает, так как запрос не успеет выполнится
       // 2 вариант - запрос не выполняется, данные уже есть в кэше - выполняется наш onSuccess
-      this.queryResult = this.observer.getOptimisticResult(_params);
+      this.queryResult = this.observer.getOptimisticResult({
+        useErrorBoundary: false,
+        refetchOnReconnect: false,
+        ..._params,
+      });
 
       if (this.queryResult.data) {
         _params.onSuccess && _params.onSuccess(this.queryResult.data);
@@ -291,7 +295,11 @@ export class AsyncService {
     // onSuccess будет вызываться всегда 1 раз
     // 1 вариант - getOptimisticResult вызовет его, если это запрос. Наш вызов не сработает, так как запрос не успеет выполнится
     // 2 вариант - запрос не выполняется, данные уже есть в кэше - выполняется наш onSuccess
-    const result = observer.getOptimisticResult(_params);
+    const result = observer.getOptimisticResult({
+      useErrorBoundary: false,
+      refetchOnReconnect: false,
+      ..._params
+    });
 
     if (result.data) {
       _params.onSuccess && _params.onSuccess(result.data);

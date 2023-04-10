@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@mobx-ecosystem/mobx-react-query",
   "private": false,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "a wrapper that allows you to convenietly use react-query features with mobx",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -17,10 +17,11 @@
   },
   "scripts": {
     "dev": "tsc --watch",
-    "_clear": "rimraf dist/*",
+    "_clear": "rimraf dist",
     "tsc": "tsc",
     "_make-bundle": "rollup -c",
     "build": "run-s _clear _make-bundle",
+    "pub": "yarn build && yarn publish --access public",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -31,16 +32,19 @@
   ],
   "author": "RudikS",
   "license": "MIT",
-  "dependencies": {
-    "mobx": "^6.9.0",
-    "react-query": "^3.39.3"
+  "peerDependencies": {
+    "@tanstack/react-query": "^4",
+    "mobx": "^4 || ^5 || ^6"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-node-resolve": "^15.0.2",
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.1.0",
+    "@tanstack/react-query": "^4.28.0",
+    "mobx": "^6.9.0",
     "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.0",
     "rollup": "^3.20.2",
     "rollup-plugin-dts": "^5.3.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
