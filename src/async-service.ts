@@ -77,7 +77,7 @@ export const configureAsyncService = (options: AsyncServiceConfiguration) => {
 export class AsyncService {
   queryClient: QueryClient;
 
-  queryResult?: QueryObserverResult;
+  queryResult: QueryObserverResult = { status: 'loading' } as QueryObserverResult;
   mutationResult?: MutationObserverResult<
     unknown,
     ServerError,
@@ -118,7 +118,7 @@ export class AsyncService {
   }
 
   get isIdle() {
-    return !this.queryResult || this.queryResult.status === 'loading';
+    return this.queryResult.status === 'loading';
   }
 
   /**
