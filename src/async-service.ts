@@ -75,6 +75,8 @@ export const configureAsyncService = (options: AsyncServiceConfiguration) => {
  * При необходимости добавить QueriesObserver по аналогии для нескольких запросов для подтягивания данных
  */
 export class AsyncService {
+  queryClient: QueryClient;
+
   queryResult?: QueryObserverResult;
   mutationResult?: MutationObserverResult<
     unknown,
@@ -111,6 +113,8 @@ export class AsyncService {
 
   constructor() {
     makeAutoObservable(this);
+
+    this.queryClient = queryClient;
   }
 
   get isIdle() {
