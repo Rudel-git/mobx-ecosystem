@@ -18,7 +18,7 @@ export default [
     external: ['mobx', 'lodash'],
     plugins: [
       external(), 
-      resolve(),
+      //resolve(),
       typescript({ tsconfig: `./tsconfig.json` }), 
       terser()
     ]
