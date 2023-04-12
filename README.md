@@ -1,7 +1,1 @@
-## Installation
-```bash
-npm install @mobx-ecosystem/mobx-react-query mobx react-query
-
-
-yarn add @mobx-ecosystem/mobx-react-query mobx react-query
-```
+mobx-ecosystem creates a convenient infrastructure for development using MobX
