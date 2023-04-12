@@ -1,4 +1,5 @@
-export type ValidateFunction = (validationSchema: unknown) => Promise<Record<string, string>>;
+export type ValidateFunction = 
+  (fieldValues: Record<string, unknown>, validationSchema: unknown) => Promise<Record<string, string>>;
 
 export let validate: ValidateFunction | undefined;
 

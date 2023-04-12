@@ -28,13 +28,8 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    * *Configure this method with configureForm from mobx-form
    */
   validate = async () => {
-    const fieldValues = {} as Record<string, unknown>;
-
-    this.keys.forEach(key => {
-      fieldValues[key] = this.fields[key].value;
-    });
-
-    const errors = await validate?.(this.validationSchema);
+    const fieldValues = this.getValues();
+    const errors = await validate?.(fieldValues, this.validationSchema);
 
     if(errors && Object.keys(errors || []).length != 0) {
       this.setErrors(errors);
@@ -77,7 +72,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    * @returns Object of field values
    */
   getValues = () => {
-    const values: any = {};
+    const values: Record<string, unknown> = {};
 
     this.keys.forEach(key => {
       values[key] = this.fields[key].value;
