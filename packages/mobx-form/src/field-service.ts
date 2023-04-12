@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, makeObservable, runInAction } from 'mobx';
 import { isObject } from 'utils';
 
 type FieldOptionsType = { onError?: boolean };
@@ -27,9 +27,11 @@ export class FieldService<T> {
   }
 
   set initValue(initValue: Nullable<T> | undefined) {
-    this._initValue = initValue;
-    this._value = initValue;
-    this.validate && this.validate();
+    runInAction(() => {
+      this._initValue = initValue;
+      this._value = initValue;
+      this.validate && this.validate();
+    })
   }
 
   get value() {
@@ -37,7 +39,9 @@ export class FieldService<T> {
   }
 
   set value(value: Nullable<T> | undefined) {
-    this._value = value;
+    runInAction(() => {
+      this._value = value;
+    })
   }
 
   get error() {
@@ -45,7 +49,9 @@ export class FieldService<T> {
   }
 
   set error(error: string | undefined) {
-    this._error = error;
+    runInAction(() => {
+      this._error = error;
+    })
   }
 
   get disabled() {
@@ -53,7 +59,9 @@ export class FieldService<T> {
   }
 
   set disabled(disabled: boolean) {
-    this._disabled = disabled;
+    runInAction(() => {
+      this._disabled = disabled;
+    })
   }
 
   get isValid() {
