@@ -34,7 +34,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
       fieldValues[key] = this.fields[key].value;
     });
 
-    const errors = await validate?.();
+    const errors = await validate?.(this.validationSchema);
 
     if(errors && Object.keys(errors || []).length != 0) {
       this.setErrors(errors);
