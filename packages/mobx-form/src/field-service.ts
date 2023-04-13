@@ -1,16 +1,16 @@
 import { isEqual } from 'lodash';
-import { makeAutoObservable, makeObservable, runInAction } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import { isObject } from 'utils';
 
 type FieldOptionsType = { onError?: boolean };
 type Nullable<T> = T | null;
 
 export class FieldService<T> {
-  _serviceType = 'field-service';
-  _initValue?: Nullable<T>;
-  _value?: Nullable<T>;
-  _error?: string;
   validate?(): Promise<void>;
+  _serviceType = 'field-service';
+  _initValue?: Nullable<T> = undefined;
+  _value?: Nullable<T> = undefined;
+  _error?: string = undefined;
   _disabled = false;
 
   options?: FieldOptionsType;
@@ -27,11 +27,9 @@ export class FieldService<T> {
   }
 
   set initValue(initValue: Nullable<T> | undefined) {
-    runInAction(() => {
-      this._initValue = initValue;
-      this._value = initValue;
-      this.validate && this.validate();
-    })
+    this._initValue = initValue;
+    this._value = initValue;
+    this.validate && this.validate();
   }
 
   get value() {
@@ -39,9 +37,7 @@ export class FieldService<T> {
   }
 
   set value(value: Nullable<T> | undefined) {
-    runInAction(() => {
-      this._value = value;
-    })
+    this._value = value;
   }
 
   get error() {
@@ -49,9 +45,7 @@ export class FieldService<T> {
   }
 
   set error(error: string | undefined) {
-    runInAction(() => {
-      this._error = error;
-    })
+    this._error = error;
   }
 
   get disabled() {
@@ -59,9 +53,7 @@ export class FieldService<T> {
   }
 
   set disabled(disabled: boolean) {
-    runInAction(() => {
-      this._disabled = disabled;
-    })
+    this._disabled = disabled;
   }
 
   get isValid() {
@@ -74,6 +66,11 @@ export class FieldService<T> {
     }
 
     return this._value === this._initValue;
+  }
+
+  onChange = (_: any, value: T) => {
+    this.value = value;
+    this.validate && this.validate();
   }
 
   // TODO: Rethink...
@@ -95,10 +92,7 @@ export class FieldService<T> {
 
     return {
       ...commonProps,
-      onChange: (_: any, value: T) => {
-        this.value = value;
-        this.validate && this.validate();
-      },
+      onChange: this.onChange
     };
   }
 }
