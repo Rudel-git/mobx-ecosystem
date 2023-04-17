@@ -80,6 +80,37 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
 
     return values;
   };
+
+  /**
+ * Set fields by this
+ */
+  setFieldsByThis = (obj: any) => {
+    const fields = {} as any;
+    Object.keys(obj).forEach(key => {
+      if (obj[key] && obj[key] instanceof FieldService<unknown>) {
+        fields[key] = obj[key];
+      }
+    });
+
+    this.fields = fields;
+    this.keys.forEach(key => {
+      this.fields[key].validate = this.validate;
+    });
+  };
+
+   /**
+   * Set object to values by form service keys
+   */
+  setValues = (obj: Record<string, unknown>) => {
+    this.keys.forEach(key => (this.fields[key].value = obj[key]));
+  };
+
+   /**
+   * Set object to init values by form service keys
+   */
+  setInitValues = (obj: Record<string, unknown>) => {
+    this.keys.forEach(key => (this.fields[key].initValue = obj[key]));
+  };
   
   /**
    * Set field values to init values
