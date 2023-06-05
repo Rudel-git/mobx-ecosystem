@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
@@ -94,7 +94,9 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
 
     this.fields = fields;
     this.keys.forEach(key => {
-      this.fields[key].validate = this.validate;
+      runInAction(() => {
+        this.fields[key].validate = this.validate;
+      })
     });
   };
 
