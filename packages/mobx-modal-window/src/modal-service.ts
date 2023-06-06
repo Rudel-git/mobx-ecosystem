@@ -1,11 +1,10 @@
 import { makeAutoObservable } from 'mobx';
 
 export class ModalService {
-  isOpen: boolean;
+  isOpen: boolean = false;
 
-  constructor(initIsOpen = false) {
+  constructor() {
     makeAutoObservable(this);
-    this.isOpen = initIsOpen;
   }
 
   setIsOpen = (isOpen: boolean) => {
