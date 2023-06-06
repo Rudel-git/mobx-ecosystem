@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@mobx-ecosystem/mobx-modal-window",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "provides the ability to use modal and dialog windows",
   "main": "dist/index.js",
   "module": "dist/index.js",
