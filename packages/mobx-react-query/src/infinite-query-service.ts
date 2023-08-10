@@ -1,7 +1,7 @@
 import { InfiniteQueryObserver, InfiniteQueryObserverOptions, InfiniteQueryObserverResult, QueryKey } from "@tanstack/react-query";
 import { DEFAULT_METHOD_OPTIONS, onInfiniteQueryError, queryClient } from "config";
 import { makeAutoObservable, runInAction } from "mobx";
-import { AsyncServiceMethodOptions, ServerError } from "types";
+import { AsyncServiceMethodOptions, ServerError } from "./types";
 
 export class InfiniteQueryService {
   queryClient = queryClient;

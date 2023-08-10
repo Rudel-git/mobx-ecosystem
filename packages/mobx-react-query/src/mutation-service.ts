@@ -1,7 +1,7 @@
 import { MutationObserver, MutationObserverOptions, MutationObserverResult } from "@tanstack/react-query";
 import { DEFAULT_METHOD_OPTIONS, onMutationError, queryClient } from "config";
 import { makeAutoObservable, runInAction } from "mobx";
-import { AsyncServiceMethodOptions, ServerError } from "types";
+import { AsyncServiceMethodOptions, ServerError } from "./types";
 
 export class MutationService {
   queryClient = queryClient;
@@ -71,7 +71,7 @@ export class MutationService {
       this.observer.subscribe(result => {
         runInAction(() => {
           this.isMutationLoading = result.isLoading;
-          
+
           this.mutationResult = result as MutationObserverResult<
             unknown,
             ServerError,

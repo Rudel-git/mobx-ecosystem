@@ -1,7 +1,7 @@
 import { QueryKey, QueryObserver, QueryObserverOptions, QueryObserverResult } from "@tanstack/react-query";
 import { DEFAULT_METHOD_OPTIONS, onQueryError, queryClient } from "config";
 import { makeAutoObservable, runInAction } from "mobx";
-import { AsyncServiceMethodOptions, ServerError } from "types";
+import { AsyncServiceMethodOptions, ServerError } from "./types";
 
 export class QueryService {
   queryClient = queryClient;

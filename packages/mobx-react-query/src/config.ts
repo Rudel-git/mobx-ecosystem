@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { MobxReactQueryConfiguration, OnErrorCallback } from "types";
+import { MobxReactQueryConfiguration, OnErrorCallback } from "./types";
 
 export const DEFAULT_METHOD_OPTIONS = {
   hasToast: true,
