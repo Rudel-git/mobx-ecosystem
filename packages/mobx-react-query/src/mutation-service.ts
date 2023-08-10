@@ -5,6 +5,8 @@ import { AsyncServiceMethodOptions, ServerError } from "types";
 
 export class MutationService {
   queryClient = queryClient;
+  observer = new MutationObserver(queryClient, {});
+
   mutationResult?: MutationObserverResult<
     unknown,
     ServerError,
@@ -62,23 +64,24 @@ export class MutationService {
             this.isMutationFullLoading = false;
           })
         },
-      };
+      } as MutationObserverOptions;
 
-      const observer = new MutationObserver(queryClient, _params);
+      this.observer.setOptions(_params);
 
-      observer.subscribe(result => {
+      this.observer.subscribe(result => {
         runInAction(() => {
+          this.isMutationLoading = result.isLoading;
+          
           this.mutationResult = result as MutationObserverResult<
             unknown,
             ServerError,
             unknown,
             unknown
           >;
-          this.isMutationLoading = result.isLoading;
         });
       });
 
-      observer.mutate().catch(error => options?.rejectable && reject(error));
+      this.observer.mutate().catch(error => options?.rejectable && reject(error));
     });
   };
 }
