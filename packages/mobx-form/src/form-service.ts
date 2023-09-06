@@ -22,7 +22,12 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
 
   private setValidationToFields = (fields: any) => {
     if(fields instanceof FieldService) {
-      fields.validate = this.validate;
+      if(typeof fields.value === 'string') {
+        fields.validate = this.validate;
+      }
+      else {
+
+      }
     }
     else if(typeof fields === 'object') {
       Object.keys(fields || {}).forEach(key => {
