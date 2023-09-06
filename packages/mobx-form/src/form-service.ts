@@ -2,7 +2,6 @@ import { makeAutoObservable, runInAction } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
-import { forEach } from 'lodash';
 export class FormService<T extends Record<string, FieldService<unknown>>> {
   fields: T;
   validationSchema?: unknown;
@@ -18,9 +17,18 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     this.fields = fields;
     this.validationSchema = validationSchema;
 
-    this.keys.forEach(key => {
-      this.fields[key].validate = this.validate;
-    });
+    this.setValidationToFields(this.fields);
+  }
+
+  private setValidationToFields = (fields: any) => {
+    if(typeof fields === 'object') {
+      Object.keys(fields || {}).forEach(key => {
+        this.setValidationToFields(fields?.[key]);
+      });
+    }
+    else {
+      fields.validate = this.validate;
+    }
   }
 
   /***
