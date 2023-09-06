@@ -21,12 +21,13 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   }
 
   private setValidationToFields = (fields: any) => {
+    console.log(fields);
     if(fields instanceof FieldService) {
       if(typeof fields.value === 'string') {
         fields.validate = this.validate;
       }
       else {
-
+        this.setValidationToFields(fields.value);
       }
     }
     else if(typeof fields === 'object') {
