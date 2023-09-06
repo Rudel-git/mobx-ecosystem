@@ -147,9 +147,16 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    * Set errors for fields
    * @param errors object of string which provides errors for fields
    */
-  setErrors(errors: Record<string, string>) {
+  setErrors(errors: Record<string, any>) {
     this.keys.forEach(key => {
-      this.fields[key].error = errors?.[key];
+      const error = errors?.[key];
+
+      if(typeof error !== 'string') {
+        return this.setErrors(error)
+      }
+      else {
+        this.fields[key].error = error;
+      }
     });
   }
 
