@@ -198,7 +198,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   setErrors(error: any) {
     this.bypassFields(
       this.fields, 
-      (field, levelParams) => field.error = String(levelParams), 
+      (field, levelParams?: string) => field.error = levelParams, 
       error
     );
   }
