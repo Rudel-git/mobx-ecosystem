@@ -95,9 +95,13 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
       }
 
       if(typeof value === 'object') {
+        const values: Record<string, unknown> = {};
+
         for(const key of Object.keys(value)) {
-          return this.getValue(value?.[key]);
+          values[key] = this.getValue(value?.[key]);
         }
+
+        return values;
       }
     }
     
