@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
+import { forEach } from 'lodash';
 export class FormService<T extends Record<string, FieldService<unknown>>> {
   fields: T;
   validationSchema?: unknown;
@@ -79,21 +80,28 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    */
   getValues = () => {
     const values: Record<string, unknown> = {};
-
-    this.keys.forEach(key => {
+    
+    for(const key in this.keys) {
       values[key] = this.getValue(this.fields[key].value);
-    });
+    }
 
     return values;
   };
 
-  private getValue: any = (value: unknown) => {
-    if(value instanceof FieldService) {
-      return this.getValue(value.value);
+  private getValue: any = (value: any) => {
+    if(value) {
+      if(value instanceof FieldService) {
+        return this.getValue(value.value);
+      }
+
+      if(typeof value === 'object') {
+        for(const key in Object.keys(value)) {
+          return this.getValue(value?.[key]);
+        }
+      }
     }
-    else {
-      return value;
-    }
+    
+    return value;
   }
 
   /**
