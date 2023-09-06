@@ -149,15 +149,22 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    */
   setErrors(errors: Record<string, any>) {
     this.keys.forEach(key => {
-      const error = errors?.[key];
-
-      if(typeof error !== 'string') {
-        return this.setErrors(error)
-      }
-      else {
-        this.fields[key].error = error;
-      }
+      const error = errors?.[key]; // string or object
+      this.setError(error, this.fields[key])
     });
+  }
+
+  private setError = (error: any, field: FieldService<any>) => {
+    if(typeof error !== 'string' && field  && field instanceof FieldService) {
+      Object.keys(error || {}).forEach(key => {
+        if(key in field.value) {
+          this.setError(error?.[key], field.value?.[key]);
+        }
+      })
+    }
+    else {
+      field.error = error;
+    }
   }
 
   /**
