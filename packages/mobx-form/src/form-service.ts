@@ -49,6 +49,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     }
     else {
       this.resetErrors(this.fields);
+      console.log(this.fields);
     }
   };
 
@@ -164,6 +165,8 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    * Set field errors to undefined
    */
   resetErrors = (fields: any) => {
+    console.log(fields);
+
     if(fields instanceof FieldService) {
       if(typeof fields.value !== 'string') {
         this.resetErrors(fields.value)
