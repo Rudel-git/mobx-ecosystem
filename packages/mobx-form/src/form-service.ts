@@ -21,14 +21,12 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   }
 
   private setValidationToFields = (fields: any) => {
-    console.log(fields);
     if(fields instanceof FieldService) {
-      if(typeof fields.value === 'string') {
-        fields.validate = this.validate;
-      }
-      else {
+      if(typeof fields.value !== 'string') {
         this.setValidationToFields(fields.value);
       }
+
+      fields.validate = this.validate;
     }
     else if(typeof fields === 'object') {
       Object.keys(fields || {}).forEach(key => {
@@ -45,8 +43,6 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   validate = async () => {
     const fieldValues = this.getValues();
     const errors = await validate?.(fieldValues, this.validationSchema);
-
-    console.log({ validateDebug: { fieldValues, errors }})
 
     if(errors && Object.keys(errors || []).length != 0) {
       this.setErrors(errors);
@@ -167,8 +163,19 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   /**
    * Set field errors to undefined
    */
-  resetErrors = () => {
-    this.keys.forEach(key => (this.fields[key].error = undefined));
+  resetErrors = (fields: any) => {
+    if(fields instanceof FieldService) {
+      if(typeof fields.value !== 'string') {
+        this.resetErrors(fields.value)
+      }
+
+      fields.error = undefined
+    }
+    else if(typeof fields === 'object') {
+      Object.keys(fields || {}).forEach(key => {
+        this.resetErrors(fields?.[key]);
+      });
+    }
   }
 
   /**
@@ -182,8 +189,6 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   }
 
   private setError = (error: any, field: FieldService<any>) => {
-    console.log({ debug: { error, field }})
-
     if(typeof error !== 'string' && field  && field instanceof FieldService) {
       Object.keys(error || {}).forEach(key => {
         if(key in field.value) {
