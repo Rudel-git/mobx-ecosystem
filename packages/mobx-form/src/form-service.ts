@@ -48,7 +48,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
       this.setErrors(errors);
     }
     else {
-      this.resetErrors();
+      this.resetErrors(this.fields);
     }
   };
 
