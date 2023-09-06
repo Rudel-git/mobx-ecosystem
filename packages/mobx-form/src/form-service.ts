@@ -1,7 +1,8 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
+
 export class FormService<T extends Record<string, FieldService<unknown>>> {
   fields: T;
   validationSchema?: unknown;
@@ -17,22 +18,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     this.fields = fields;
     this.validationSchema = validationSchema;
 
-    this.setValidationToFields(this.fields);
-  }
-
-  private setValidationToFields = (fields: any) => {
-    if(fields instanceof FieldService) {
-      if(typeof fields.value !== 'string') {
-        this.setValidationToFields(fields.value);
-      }
-
-      fields.validate = this.validate;
-    }
-    else if(typeof fields === 'object') {
-      Object.keys(fields || {}).forEach(key => {
-        this.setValidationToFields(fields?.[key]);
-      });
-    }
+    this.setValidationToFields();
   }
 
   /***
@@ -45,10 +31,10 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     const errors = await validate?.(fieldValues, this.validationSchema);
 
     if(errors && Object.keys(errors || []).length != 0) {
-      this.setErrors(this.fields, errors);
+      this.setErrors(errors);
     }
     else {
-      this.resetErrors(this.fields);
+      this.resetErrors();
     }
   };
 
@@ -67,14 +53,36 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    * Check each field if its isValid = true
    */
   get isValid() {
-    return this.keys.every(key => this.fields[key].isValid);
+    let isValid = true;
+
+    this.bypassFields(
+      this.fields, 
+      (field) => {
+        if(!field.isValid) {
+          isValid = false
+        }
+      }
+    );
+
+    return isValid;
   }
 
   /**
    * Check each field if its isInit = false
    */
   get isTouched() {
-    return this.keys.some(key => !this.fields[key].isInit);
+    let isTouched = false;
+
+    this.bypassFields(
+      this.fields, 
+      (field) => {
+        if(!field.isInit) {
+          isTouched = true;
+        }
+      }
+    );
+
+    return isTouched;
   }
 
   /**
@@ -103,8 +111,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
       if(value instanceof FieldService) {
         return this.getValue(value?.value);
       }
-
-      if(typeof value === 'object') {
+      else if(typeof value === 'object') {
         const values: Record<string, unknown> = {};
 
         for(const key of Object.keys(value)) {
@@ -130,81 +137,84 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     });
 
     this.fields = fields;
-    this.keys.forEach(key => {
-      runInAction(() => {
-        this.fields[key].validate = this.validate;
-      })
-    });
+    this.setValidationToFields();
   };
 
-   /**
-   * Set object to values by form service keys
-   */
-  setValues = (obj: Record<string, unknown>) => {
-    this.keys.forEach(key => (this.fields[key].value = obj[key]));
-  };
+  private bypassFields = <T>(fields: any, action: (field: FieldService<unknown>, levelParams?: T) => void, levelParams?: any) => {
+    if(fields instanceof FieldService) {
+      // if(typeof fields.value === 'object') {
+      //   this.bypassFields(fields.value, action, levelParams)
+      // }
 
-   /**
-   * Set object to init values by form service keys
-   */
-  setInitValues = (obj: Record<string, unknown>) => {
-    this.keys.forEach(key => (this.fields[key].initValue = obj[key]));
-  };
+      action(fields, levelParams);
+    }
+    else if(typeof fields === 'object') {
+      Object.keys(fields || {}).forEach(key => {
+        this.bypassFields(fields?.[key], action, levelParams?.[key]);
+      });
+    }
+  }
+
+  private setValidationToFields = () => {
+    this.bypassFields(
+      this.fields, 
+      (field) => field.validate = this.validate, 
+    );
+  }
   
   /**
-   * Set field values to init values
-   */
-  setValuesAsInit = () => {
-    this.keys.forEach(key => {
-      this.fields[key].initValue = this.fields[key].value;
-    });
+  * Set object to init values by form service keys
+  */
+  setInitValues = (values: Record<string, unknown>) => {
+    this.bypassFields(
+      this.fields, 
+      (field, levelParams) => field.initValue = String(levelParams), 
+      values
+    );
+  };
+
+  /**
+  * Set object to values by form service keys
+  */
+  setValues = (values: Record<string, unknown>) => {
+    this.bypassFields(
+      this.fields, 
+      (field, levelParams) => field.value = String(levelParams), 
+      values
+    );
   };
 
   /**
    * Set field errors to undefined
    */
-  resetErrors = (fields: any) => {
-    if(fields instanceof FieldService) {
-      if(typeof fields.value !== 'string') {
-        this.resetErrors(fields.value)
-      }
-
-      fields.error = undefined
-    }
-    else if(typeof fields === 'object') {
-      Object.keys(fields || {}).forEach(key => {
-        this.resetErrors(fields?.[key]);
-      });
-    }
+  resetErrors = () => {
+    this.bypassFields(this.fields, (field) => field.error = undefined)
   }
 
   /**
    * Set errors for fields
    * @param errors object of string which provides errors for fields
    */
-  setErrors(fields: any, error: any) {
-
-    if(fields instanceof FieldService) {
-      if(typeof fields.value !== 'string') {
-        this.setErrors(fields.value, error)
-      }
-
-      fields.error = error
-    }
-    else if(typeof fields === 'object') {
-      Object.keys(fields || {}).forEach(key => {
-        this.setErrors(fields?.[key], error?.[key]);
-      });
-    }
+  setErrors(error: any) {
+    this.bypassFields(
+      this.fields, 
+      (field, levelParams) => field.error = String(levelParams), 
+      error
+    );
   }
+
+   /**
+   * Set field values to init values
+   */
+   setValuesAsInit = () => {
+    this.bypassFields(this.fields, (field) => field.initValue = field.value)
+  };
 
   /**
    * Reset fields to their own initial values
    */
   reset = () => {
-    this.keys.forEach(
-      key => (this.fields[key].value = this.fields[key].initValue),
-    );
+    this.bypassFields(this.fields, (field) => field.value = field.initValue)
     this.validate();
   };
 
@@ -212,13 +222,13 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    * Pass true to the property 'disabled'
    */
   disable = () => {
-    this.keys.forEach(key => (this.fields[key].disabled = true));
+    this.bypassFields(this.fields, (field) => field.disabled = true)
   };
 
   /**
    * Pass false to the property 'disabled'
    */
   enable = () => {
-    this.keys.forEach(key => (this.fields[key].disabled = false));
+    this.bypassFields(this.fields, (field) => field.disabled = false)
   };
 }
