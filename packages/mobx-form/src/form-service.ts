@@ -39,6 +39,10 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     }
   };
 
+  setValidationSchema = (validationSchema: unknown) => {
+    this.validationSchema = validationSchema;
+  }
+
   /**
    * Return field keys
    */
