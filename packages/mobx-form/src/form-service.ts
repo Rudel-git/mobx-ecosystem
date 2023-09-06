@@ -31,6 +31,8 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     const fieldValues = this.getValues();
     const errors = await validate?.(fieldValues, this.validationSchema);
 
+    console.log({ validateDebug: { fieldValues, errors }})
+
     if(errors && Object.keys(errors || []).length != 0) {
       this.setErrors(errors);
     }
@@ -155,7 +157,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
 
   private setError = (error: any, field: FieldService<any>) => {
     console.log({ debug: { error, field }})
-    
+
     if(typeof error !== 'string' && field  && field instanceof FieldService) {
       Object.keys(error || {}).forEach(key => {
         if(key in field.value) {
