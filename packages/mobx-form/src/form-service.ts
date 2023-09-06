@@ -80,7 +80,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
    */
   getValues = () => {
     const values: Record<string, unknown> = {};
-    
+
     for(const key in this.keys) {
       values[key] = this.getValue(this.fields[key].value);
     }
@@ -91,7 +91,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   private getValue: any = (value: any) => {
     if(value) {
       if(value instanceof FieldService) {
-        return this.getValue(value.value);
+        return this.getValue(value?.value);
       }
 
       if(typeof value === 'object') {
