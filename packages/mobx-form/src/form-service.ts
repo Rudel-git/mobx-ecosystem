@@ -75,11 +75,20 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
     const values: Record<string, unknown> = {};
 
     this.keys.forEach(key => {
-      values[key] = this.fields[key].value;
+      values[key] = this.getValue(this.fields[key].value);
     });
 
     return values;
   };
+
+  private getValue: any = (value: unknown) => {
+    if(value instanceof FieldService) {
+      return this.getValue(value.value);
+    }
+    else {
+      return value;
+    }
+  }
 
   /**
  * Set fields by this
@@ -87,7 +96,7 @@ export class FormService<T extends Record<string, FieldService<unknown>>> {
   setFieldsByThis = (obj: any) => {
     const fields = {} as any;
     Object.keys(obj).forEach(key => {
-      if (obj[key] && obj[key] instanceof FieldService<unknown>) {
+      if (obj[key] && obj[key] instanceof FieldService) {
         fields[key] = obj[key];
       }
     });
