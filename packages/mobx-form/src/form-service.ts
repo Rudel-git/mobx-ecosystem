@@ -102,26 +102,24 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
     const values: Record<string, unknown> = {};
 
     for(const key of this.keys) {
-      values[key] = this.getValue(this.fields[key]?.value);
+      values[key] = this.getValue(this.fields[key]);
     }
 
     return values;
   };
 
   private getValue: any = (value: any) => {
-    if(value) {
-      if(value instanceof FieldService) {
-        return this.getValue(value?.value);
-      }
-      else if(typeof value === 'object') {
-        const values: Record<string, unknown> = {};
+    if(value instanceof FieldService) {
+      return value?.value
+    }
+    else if(typeof value === 'object') {
+      const values: Record<string, unknown> = {};
 
-        for(const key of Object.keys(value)) {
-          values[key] = this.getValue(value?.[key]);
-        }
-
-        return values;
+      for(const key of Object.keys(value)) {
+        values[key] = this.getValue(value?.[key]);
       }
+
+      return values;
     }
     
     return value;
@@ -201,8 +199,6 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
     this.bypassFields(
       this.fields, 
       (field, levelParams?: string) => {
-        console.log(field);
-        console.log(levelParams);
         field.error = levelParams
       }, 
       error
