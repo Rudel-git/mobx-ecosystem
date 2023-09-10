@@ -29,7 +29,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
    */
   validate = async () => {
     const fieldValues = this.getValues();
-    const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<this>;
+    const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<T>;
 
     if(errors && Object.keys(errors || []).length != 0) {
       this.setErrors(errors);
@@ -104,7 +104,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
       values[key] = this.getValue(this.fields[key]);
     }
 
-    return values as FormValues<this>;
+    return values as FormValues<T>;
   };
 
   private getValue: any = (value: any) => {
@@ -164,7 +164,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   /**
   * Set object to init values by form service keys
   */
-  setInitValues = (values: FormValues<this>) => {
+  setInitValues = (values: FormValues<T>) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.initValue = levelParams, 
@@ -175,7 +175,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   /**
   * Set object to values by form service keys
   */
-  setValues = (values: FormValues<this>) => {
+  setValues = (values: FormValues<T>) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.value = levelParams, 
@@ -194,7 +194,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
    * Set errors for fields
    * @param errors object of string which provides errors for fields
    */
-  setErrors(error: FormErrors<this>) {
+  setErrors(error: FormErrors<T>) {
     this.bypassFields(
       this.fields, 
       (field, levelParams?: string) => {
