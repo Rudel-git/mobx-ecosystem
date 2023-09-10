@@ -1,4 +1,4 @@
-import { FieldService } from "field-service";
+import { FieldService } from "./field-service";
 
 export type FormValues<Type> = Type extends FieldService<unknown>
   ? Type['value']
