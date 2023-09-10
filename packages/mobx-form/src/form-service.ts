@@ -2,6 +2,7 @@ import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
+import { FormErrors, FormValues } from 'types';
 
 export class FormService<T extends Record<string, FieldService<unknown> | Record<string, unknown>>> {
   fields: T;
@@ -28,9 +29,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
    */
   validate = async () => {
     const fieldValues = this.getValues();
-    console.log(fieldValues);
-    const errors = await validate?.(fieldValues, this.validationSchema);
-    console.log(errors);
+    const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<this>;
 
     if(errors && Object.keys(errors || []).length != 0) {
       this.setErrors(errors);
@@ -105,7 +104,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
       values[key] = this.getValue(this.fields[key]);
     }
 
-    return values;
+    return values as FormValues<this>;
   };
 
   private getValue: any = (value: any) => {
@@ -165,7 +164,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   /**
   * Set object to init values by form service keys
   */
-  setInitValues = (values: Record<string, unknown>) => {
+  setInitValues = (values: FormValues<this>) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.initValue = levelParams, 
@@ -176,7 +175,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   /**
   * Set object to values by form service keys
   */
-  setValues = (values: Record<string, unknown>) => {
+  setValues = (values: FormValues<this>) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.value = levelParams, 
@@ -195,7 +194,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
    * Set errors for fields
    * @param errors object of string which provides errors for fields
    */
-  setErrors(error: any) {
+  setErrors(error: FormErrors<this>) {
     this.bypassFields(
       this.fields, 
       (field, levelParams?: string) => {
