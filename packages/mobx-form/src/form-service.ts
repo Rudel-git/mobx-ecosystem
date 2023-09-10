@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
-import { FormErrors, FormValues } from 'types';
+import { FormErrors, FormValues } from './types';
 
 export class FormService<T extends Record<string, FieldService<unknown> | Record<string, unknown>>> {
   fields: T;
