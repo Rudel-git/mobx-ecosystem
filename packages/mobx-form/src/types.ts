@@ -1,12 +1,12 @@
 import { FieldService } from "field-service";
 
-type FormValues<Type> = Type extends FieldService<unknown>
+export type FormValues<Type> = Type extends FieldService<unknown>
   ? Type['value']
   : {
       -readonly [Property in keyof Type]: FormValues<Type[Property]>;
     };
 
-type FormErrors<Type> = Type extends FieldService<unknown>
+export type FormErrors<Type> = Type extends FieldService<unknown>
   ? Type['error']
   : {
       -readonly [Property in keyof Type]: FormErrors<Type[Property]>;
