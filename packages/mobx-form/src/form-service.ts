@@ -164,7 +164,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   /**
   * Set object to init values by form service keys
   */
-  setInitValues = (values: FormValues<T>) => {
+  setInitValues = (values: Partial<FormValues<T>>) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.initValue = levelParams, 
@@ -175,7 +175,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
   /**
   * Set object to values by form service keys
   */
-  setValues = (values: FormValues<T>) => {
+  setValues = (values: Partial<FormValues<T>>) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.value = levelParams, 
@@ -194,7 +194,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Record
    * Set errors for fields
    * @param errors object of string which provides errors for fields
    */
-  setErrors(error: FormErrors<T>) {
+  setErrors(error: Partial<FormErrors<T>>) {
     this.bypassFields(
       this.fields, 
       (field, levelParams?: string) => {
