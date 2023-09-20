@@ -5,7 +5,7 @@ import { _checkConfiguration, validate } from 'configure-form';
 import { FormErrors, FormValues } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 
-export class FormService<T extends Record<string, FieldService<unknown> | Record<string, unknown>>> {
+export class FormService<T extends Record<string, FieldService<unknown> | CombinedFormFieldService | Record<string, unknown>>> {
   fields: T;
   validationSchema?: unknown;
 
