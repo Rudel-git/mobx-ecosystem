@@ -1,17 +1,18 @@
 import { isEqual } from 'lodash';
 import { makeAutoObservable } from 'mobx';
+import { IField } from './types';
 import { isObject } from 'utils';
 
 type FieldOptionsType = { onError?: boolean };
 type Nullable<T> = T | null;
 
-export class FieldService<T> {
+export class FieldService<T> implements IField {
   validate?(): Promise<void>;
   _serviceType = 'field-service';
-  _initValue?: Nullable<T> = undefined;
-  _value?: Nullable<T> = undefined;
-  _error?: string = undefined;
-  _disabled = false;
+  private _initValue?: Nullable<T> = undefined;
+  private _value?: Nullable<T> = undefined;
+  private _error?: string = undefined;
+  private _disabled = false;
 
   options?: FieldOptionsType;
 

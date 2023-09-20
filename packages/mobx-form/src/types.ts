@@ -1,3 +1,4 @@
+import { FormService } from "form-service";
 import { FieldService } from "./field-service";
 
 export type FormValues<Type> = Type extends FieldService<unknown>
@@ -11,7 +12,22 @@ export type FormErrors<Type> = Type extends FieldService<unknown>
   : {
       -readonly [Property in keyof Type]: FormErrors<Type[Property]>;
     };
+
+export interface IField {
+  value: unknown;
+  error?: string;
+  disabled: boolean;
+  isValid: boolean;
+  isInit: boolean;
+
+  validate?(): Promise<void>;
+}
+
+export type FormServiceValuesType = Record<string, FieldService<unknown> | Record<string, unknown>>;
   
+export interface IFormable<T extends FormServiceValuesType = FormServiceValuesType> {
+  formService: FormService<T>
+}
 
 // export type FormValues<Type extends { fields: Record<string, unknown> }> = {
 //   -readonly [Property in keyof Type['fields']]: RecursiveFormValues<
