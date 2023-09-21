@@ -90,6 +90,7 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   reset = () => {
+    this.value = this.initValue;
     this.value.forEach(it => it.formService.reset());
   }
 }
