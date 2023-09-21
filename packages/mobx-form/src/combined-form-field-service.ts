@@ -101,6 +101,6 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   getValues = () => {
-    return this.value.map(it => it.formService.getValues()) as FormValues<T['formService']['fields']>;
+    return this.value.map(it => it.formService.getValues()) as (FormValues<T['formService']['fields']>)[];
   }
 }
