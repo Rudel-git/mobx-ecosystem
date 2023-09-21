@@ -22,7 +22,10 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
 
   set initValue(_initValue: T[]) {
     this._initValue = _initValue;
-    this._value = _initValue;
+    
+    this._value = _initValue.slice(0); // copy array without objects
+    this.value.forEach(it => it.formService.reset());
+
     this._touched = false;
     this._validate();
   }
