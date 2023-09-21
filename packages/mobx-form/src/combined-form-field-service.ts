@@ -72,6 +72,10 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     return !this.isTouched;
   }
 
+  get hasItems() {
+    return Boolean(this.value.length);
+  }
+
   add = (value: T) => {
     this.value.push(value);
     this._touched = true;
@@ -92,5 +96,9 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   reset = () => {
     this.value = this.initValue;
     this.value.forEach(it => it.formService.reset());
+  }
+
+  getValues = () => {
+    return this.value.map(it => it.formService.getValues());
   }
 }
