@@ -2,11 +2,15 @@ import { isEqual } from 'lodash';
 import { makeAutoObservable } from 'mobx';
 import { IField } from './types';
 import { isObject } from 'utils';
+import mitt, { Emitter } from 'mitt';
 
 type FieldOptionsType = { onError?: boolean };
 type Nullable<T> = T | null;
+type ValueType<T> = Nullable<T> | undefined;
 
 export class FieldService<T> implements IField {
+  eventBus?: Emitter<{ ON_CHANGE: ValueType<T> }>;
+
   validate?(): Promise<void>;
   _serviceType = 'field-service';
   private _initValue?: Nullable<T> = undefined;
@@ -37,8 +41,9 @@ export class FieldService<T> implements IField {
     return this._value;
   }
 
-  set value(value: Nullable<T> | undefined) {
+  set value(value: ValueType<T>) {
     this._value = value;
+    this.eventBus?.emit("ON_CHANGE", value);
   }
 
   get error() {
@@ -67,6 +72,10 @@ export class FieldService<T> implements IField {
     }
 
     return this._value === this._initValue;
+  }
+
+  createListener = () => {
+    this.eventBus = mitt();
   }
 
   onChange = (_: any, value: T) => {
