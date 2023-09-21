@@ -1,5 +1,7 @@
-import { IField, IFormable } from './types';
+import { FormService } from 'form-service';
+import { FormValues, IField, IFormable } from './types';
 import { makeAutoObservable } from 'mobx';
+import { FieldService } from 'field-service';
 
 export class CombinedFormFieldService<T extends IFormable = IFormable> implements IField {
   validate?(): Promise<void>;
@@ -99,6 +101,6 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   getValues = () => {
-    return this.value.map(it => it.formService.getValues()) as T[];
+    return this.value.map(it => it.formService.getValues()) as FormValues<T['formService']['fields']>;
   }
 }
