@@ -95,6 +95,24 @@ export class FormService<T extends Record<string, FieldService<unknown> | Combin
   }
 
   /**
+   * always true if the form service is empty
+   */
+  get disabled() {
+    let disabled = true;
+
+    this.bypassFields(
+      this.fields, 
+      (field) => {
+        if(!field.disabled) {
+          disabled = false
+        }
+      }
+    );
+
+    return disabled;
+  }
+
+  /**
    * 
    * @returns Object of field values
    */
