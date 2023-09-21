@@ -73,11 +73,13 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
 
   add = (value: T) => {
     this.value.push(value);
+    this._touched = true;
     this._validate();
   }
 
   removeByIndex = (index: number) => {
     this.value.splice(index, 1);
+    this._touched = true;
     this._validate();
   }
 
