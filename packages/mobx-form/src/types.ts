@@ -1,13 +1,14 @@
 import { FormService } from "form-service";
 import { FieldService } from "./field-service";
+import { CombinedFormFieldService } from "./combined-form-field-service";
 
-export type FormValues<Type> = Type extends FieldService<unknown>
+export type FormValues<Type> = Type extends FieldService<unknown> | CombinedFormFieldService
   ? Type['value']
   : {
       -readonly [Property in keyof Type]: FormValues<Type[Property]>;
     };
 
-export type FormErrors<Type> = Type extends FieldService<unknown>
+export type FormErrors<Type> = Type extends FieldService<unknown> | CombinedFormFieldService
   ? Type['error']
   : {
       -readonly [Property in keyof Type]: FormErrors<Type[Property]>;
@@ -21,6 +22,7 @@ export interface IField {
   isInit: boolean;
 
   validate?(): Promise<void>;
+  reset() : void;
 }
 
 export type FormServiceValuesType = Record<string, FieldService<unknown> | Record<string, unknown>>;

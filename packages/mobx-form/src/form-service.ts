@@ -216,7 +216,7 @@ export class FormService<T extends Record<string, FieldService<unknown> | Combin
    * Reset fields to their own initial values
    */
   reset = () => {
-    this.bypassFields(this.fields, (field) => field.value = field.initValue)
+    this.bypassFields(this.fields, (field) => field.reset())
     this.validate();
   };
 

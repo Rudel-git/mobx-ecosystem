@@ -74,6 +74,10 @@ export class FieldService<T> implements IField {
     this.validate && this.validate();
   }
 
+  reset = () => {
+    this.value = this.initValue;
+  }
+
   // TODO: Rethink...
   get props() {
     let commonProps: any = {
@@ -96,4 +100,6 @@ export class FieldService<T> implements IField {
       onChange: this.onChange
     };
   }
+
+  
 }
