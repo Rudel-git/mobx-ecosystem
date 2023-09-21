@@ -2,6 +2,8 @@ import { FormService } from "form-service";
 import { FieldService } from "./field-service";
 import { CombinedFormFieldService } from "./combined-form-field-service";
 
+export type ValueType<T> = T | null | undefined;
+
 export type FormValues<Type> = Type extends FieldService<unknown> | CombinedFormFieldService
   ? Type['value']
   : {

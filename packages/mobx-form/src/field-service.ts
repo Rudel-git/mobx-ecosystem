@@ -1,26 +1,25 @@
 import { isEqual } from 'lodash';
 import { makeAutoObservable } from 'mobx';
-import { IField } from './types';
+import { IField, ValueType } from './types';
 import { isObject } from 'utils';
 import mitt, { Emitter } from 'mitt';
+import { FormService } from './form-service';
 
 type FieldOptionsType = { onError?: boolean };
-type Nullable<T> = T | null;
-type ValueType<T> = Nullable<T> | undefined;
 
-export class FieldService<T> implements IField {
+export class FieldService<T = ValueType<unknown>> implements IField {
   eventBus?: Emitter<{ ON_CHANGE: ValueType<T> }>;
 
   validate?(): Promise<void>;
   _serviceType = 'field-service';
-  private _initValue?: Nullable<T> = undefined;
-  private _value?: Nullable<T> = undefined;
+  private _initValue?: ValueType<T> = undefined;
+  private _value?: ValueType<T> = undefined;
   private _error?: string = undefined;
   private _disabled = false;
 
   options?: FieldOptionsType;
 
-  constructor(initValue?: T, options?: FieldOptionsType) {
+  constructor(initValue?: ValueType<T>, options?: FieldOptionsType) {
     makeAutoObservable(this);
 
     this.initValue = initValue;
@@ -31,7 +30,7 @@ export class FieldService<T> implements IField {
     return this._initValue;
   }
 
-  set initValue(initValue: Nullable<T> | undefined) {
+  set initValue(initValue: ValueType<T>) {
     this._initValue = initValue;
     this._value = initValue;
     this.validate && this.validate();
@@ -75,10 +74,10 @@ export class FieldService<T> implements IField {
   }
 
   createListener = () => {
-    this.eventBus = mitt();
+   // this.eventBus = mitt();
   }
 
-  onChange = (_: any, value: T) => {
+  onChange = (_: any, value: ValueType<T>) => {
     this.value = value;
     this.validate && this.validate();
   }
@@ -109,6 +108,12 @@ export class FieldService<T> implements IField {
       onChange: this.onChange
     };
   }
+}
 
+class FormStore {
   
+  fieldService = new FieldService("");
+  formService = new FormService({
+   field: this.fieldService
+  });
 }
