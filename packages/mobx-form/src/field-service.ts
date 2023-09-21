@@ -74,7 +74,7 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   }
 
   createListener = () => {
-   // this.eventBus = mitt();
+    this.eventBus = mitt();
   }
 
   onChange = (_: any, value: ValueType<T>) => {
@@ -108,12 +108,4 @@ export class FieldService<T = ValueType<unknown>> implements IField {
       onChange: this.onChange
     };
   }
-}
-
-class FormStore {
-  
-  fieldService = new FieldService("");
-  formService = new FormService({
-   field: this.fieldService
-  });
 }

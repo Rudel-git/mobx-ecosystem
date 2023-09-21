@@ -4,13 +4,13 @@ import { CombinedFormFieldService } from "./combined-form-field-service";
 
 export type ValueType<T> = T | null | undefined;
 
-export type FormValues<Type> = Type extends FieldService<unknown> | CombinedFormFieldService
+export type FormValues<Type> = Type extends IField
   ? Type['value']
   : {
       -readonly [Property in keyof Type]: FormValues<Type[Property]>;
     };
 
-export type FormErrors<Type> = Type extends FieldService<unknown> | CombinedFormFieldService
+export type FormErrors<Type> = Type extends IField
   ? Type['error']
   : {
       -readonly [Property in keyof Type]: FormErrors<Type[Property]>;
