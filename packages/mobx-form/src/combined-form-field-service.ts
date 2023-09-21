@@ -24,8 +24,15 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     this._initValue = _initValue;
     this._value = _initValue.slice(0); // copy array without objects
 
-    this._touched = false;
+    this.setTouched(false);
     this._validate();
+
+    // вариант, когда используется сразу 2 схемы. На массив объектов, а в объекте своя схема
+    // this._initValue.forEach(it => {
+    //   it.formService.validate = () => {
+    //     return it.formService.validate();
+    //   }
+    // })
   }
 
   get value() {
@@ -34,7 +41,7 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
 
   set value(array: T[]) {
     this._value = array;
-    this._touched = true;
+    this.setTouched(true);
   }
 
   get disabled() {
@@ -76,15 +83,19 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     return Boolean(this.value.length);
   }
 
+  private setTouched = (touched: boolean) => {
+    this._touched = touched;
+  }
+
   add = (value: T) => {
     this.value.push(value);
-    this._touched = true;
+    this.setTouched(true);
     this._validate();
   }
 
   removeByIndex = (index: number) => {
     this.value.splice(index, 1);
-    this._touched = true;
+    this.setTouched(true);
     this._validate();
   }
 
@@ -94,8 +105,9 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   reset = () => {
-    this.value = this.initValue;
-    this.value.forEach(it => it.formService.reset());
+    this._value = this.initValue;
+    this._value.forEach(it => it.formService.reset());
+    this.setTouched(false);
   }
 
   getValues = () => {
