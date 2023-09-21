@@ -99,6 +99,6 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   getValues = () => {
-    return this.value.map(it => it.formService.getValues());
+    return this.value.map(it => it.formService.getValues()) as T[];
   }
 }
