@@ -79,7 +79,11 @@ export class FieldService<T = ValueType<unknown>> implements IField {
 
   onChange = (_: any, value: ValueType<T>) => {
     this.value = value;
-    this.validate && this.validate();
+    this.validate?.();
+  }
+
+  onBlur = (_: any) => {
+    this.validate?.();
   }
 
   reset = () => {
@@ -105,7 +109,8 @@ export class FieldService<T = ValueType<unknown>> implements IField {
 
     return {
       ...commonProps,
-      onChange: this.onChange
+      onChange: this.onChange,
+      onBlur: this.onBlur,
     };
   }
 }

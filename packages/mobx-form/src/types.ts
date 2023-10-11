@@ -44,3 +44,5 @@ export interface IFormable<T extends FormServiceValuesType = FormServiceValuesTy
 //     Type['fields'][Property]
 //   >;
 // };
+
+export type ValidationType = 'only-touched' | 'everything';

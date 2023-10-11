@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, validate } from 'configure-form';
-import { FormErrors, FormValues } from './types';
+import { FormErrors, FormValues, ValidationType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 
 export class FormService<T extends Record<string, FieldService<any> | CombinedFormFieldService | Record<string, unknown>>> {
@@ -28,12 +28,12 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
    * 
    * *Configure this method with configureForm from mobx-form
    */
-  validate = async () => {
+  validate = async (type: ValidationType = 'only-touched') => {
     const fieldValues = this.getValues();
     const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<T>;
 
     if(errors && Object.keys(errors || []).length != 0) {
-      this.setErrors(errors);
+      this.setErrors(errors, type);
     }
     else {
       this.resetErrors();
@@ -213,11 +213,13 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
    * Set errors for fields
    * @param errors object of string which provides errors for fields
    */
-  setErrors(error: Partial<FormErrors<T>>) {
+  setErrors(error: Partial<FormErrors<T>>, validationType: ValidationType = 'only-touched') {
     this.bypassFields(
       this.fields, 
       (field, levelParams?: string) => {
-        field.error = levelParams
+        if(!field.isInit || validationType === 'everything') { // set error only if it's changed
+          field.error = levelParams
+        }
       }, 
       error
     );
