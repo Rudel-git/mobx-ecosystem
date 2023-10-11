@@ -70,7 +70,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
   }
 
   /**
-   * Check each field if its isInit = false
+   * Check each field if its isTouched = true
    */
   get isTouched() {
     let isTouched = false;
@@ -78,7 +78,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
     this.bypassFields(
       this.fields, 
       (field) => {
-        if(!field.isInit) {
+        if(field.isTouched) {
           isTouched = true;
         }
       }
@@ -217,7 +217,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
     this.bypassFields(
       this.fields, 
       (field, levelParams?: string) => {
-        if(!field.isInit || validationType === 'everything') { // set error only if it's changed
+        if(field.isTouched || validationType === 'everything') { // set error only if it's changed
           field.error = levelParams
         }
       }, 

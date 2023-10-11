@@ -3,7 +3,6 @@ import { makeAutoObservable } from 'mobx';
 import { IField, ValueType } from './types';
 import { isObject } from 'utils';
 import mitt, { Emitter } from 'mitt';
-import { FormService } from './form-service';
 
 type FieldOptionsType = { onError?: boolean };
 
@@ -16,6 +15,7 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   private _value?: ValueType<T> = undefined;
   private _error?: string = undefined;
   private _disabled = false;
+  private _isBlurred = false;
 
   options?: FieldOptionsType;
 
@@ -73,6 +73,18 @@ export class FieldService<T = ValueType<unknown>> implements IField {
     return this._value === this._initValue;
   }
 
+  get isBlurred() {
+    return this._isBlurred;
+  }
+
+  private set isBlurred(isBlurred: boolean) {
+    this._isBlurred = isBlurred;
+  }
+
+  get isTouched() {
+    return !this.isInit || this.isBlurred
+  }
+
   createListener = () => {
     this.eventBus = mitt();
   }
@@ -83,11 +95,13 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   }
 
   onBlur = (_: any) => {
+    this.isBlurred = true;
     this.validate?.();
   }
 
   reset = () => {
     this.value = this.initValue;
+    this.isBlurred = false;
   }
 
   // TODO: Rethink...
