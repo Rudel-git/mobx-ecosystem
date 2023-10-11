@@ -110,6 +110,12 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     this.setTouched(false);
   }
 
+  setAsInit = () => {
+    this._initValue = this.value;
+    this._value.forEach(it => it.formService.setValuesAsInit());
+    this.setTouched(false);
+  }
+
   getValues = () => {
     return this.value.map(it => it.formService.getValues()) as (FormValues<T['formService']['fields']>)[];
   }

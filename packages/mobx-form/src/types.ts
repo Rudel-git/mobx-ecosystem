@@ -25,6 +25,7 @@ export interface IField {
 
   validate?(): Promise<void>;
   reset() : void;
+  setAsInit(): void;
 }
 
 export type FormServiceValuesType = Record<string, FieldService<unknown> | Record<string, unknown>>;

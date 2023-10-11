@@ -229,7 +229,9 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
    * Set field values to init values
    */
    setValuesAsInit = () => {
-    this.bypassFields(this.fields, (field) => field.initValue = field.value)
+    this.bypassFields(this.fields, (field) => {
+      field.setAsInit();
+    })
   };
 
   /**

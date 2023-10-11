@@ -104,6 +104,11 @@ export class FieldService<T = ValueType<unknown>> implements IField {
     this.isBlurred = false;
   }
 
+  setAsInit = () => {
+    this.initValue = this.value;
+    this.isBlurred = false;
+  }
+
   // TODO: Rethink...
   get props() {
     let commonProps: any = {
