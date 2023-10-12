@@ -1,13 +1,15 @@
 import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
-import { _checkConfiguration, validate } from 'configure-form';
+import { _checkConfiguration, preSubmitValidationError, validate } from 'configure-form';
 import { FormErrors, FormValues, ValidationType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 
 export class FormService<T extends Record<string, FieldService<any> | CombinedFormFieldService | Record<string, unknown>>> {
   fields: T;
   validationSchema?: unknown;
+
+  onSubmit?: () => Promise<unknown>;
 
   constructor(
     fields: T,
@@ -21,6 +23,20 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
     this.validationSchema = validationSchema;
 
     this.setValidationToFields();
+  }
+
+  setOnSubmit = (onSubmit: () => Promise<unknown>) => {
+    this.onSubmit = onSubmit;
+  }
+
+  submit = async () => {
+    await this.validate('everything');
+
+    if (this.canBeSubmitted) {
+      return this.onSubmit?.();
+    } else {
+      preSubmitValidationError?.();
+    }
   }
 
   /***
