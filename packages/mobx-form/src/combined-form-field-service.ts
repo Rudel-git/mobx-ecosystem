@@ -99,7 +99,7 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     this._validate();
   }
 
-  _validate = () => {
+  private _validate = () => {
     this.value.forEach(it => it.formService.validate());
     this.validate?.();
   }

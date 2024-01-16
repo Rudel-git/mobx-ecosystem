@@ -58,6 +58,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
 
   setValidationSchema = (validationSchema: unknown) => {
     this.validationSchema = validationSchema;
+    this.setValidationToFields();
   }
 
   /**
