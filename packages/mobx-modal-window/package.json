@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@mobx-ecosystem/mobx-modal-window",
   "private": false,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "provides the ability to use modal and dialog windows",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -55,5 +55,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/RudikS-git/mobx-ecosystem"
+  },
+  "dependencies": {
+    "mitt": "^3.0.1"
   }
 }
