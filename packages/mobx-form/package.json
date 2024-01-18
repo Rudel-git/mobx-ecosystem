@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@mobx-ecosystem/mobx-form",
   "private": false,
-  "version": "2.10.13",
+  "version": "2.10.14",
   "description": "provides the ability to use forms with validation in MobX stores",
   "main": "dist/index.js",
   "module": "dist/index.js",
