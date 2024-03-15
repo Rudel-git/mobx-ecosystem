@@ -1,6 +1,8 @@
+import mitt from 'mitt';
 import { makeAutoObservable } from 'mobx';
 
 export class ModalService {
+  eventBus = mitt<{ "ON_OPEN": void, "ON_CLOSE": void }>()
   isOpen: boolean = false;
 
   constructor() {
@@ -12,15 +14,19 @@ export class ModalService {
   };
 
   toggle = () => {
-    this.isOpen = !this.isOpen;
+    this.isOpen? this.close() : this.open();
   };
 
   open = () => {
     this.isOpen = true;
+
+    this.eventBus.emit("ON_OPEN");
   };
 
   close = () => {
     this.isOpen = false;
+
+    this.eventBus.emit("ON_CLOSE");
   };
 
   get props() {
