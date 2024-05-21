@@ -1,6 +1,6 @@
-import { FormService } from "form-service";
+import { FormService } from "./form-service";
 import { FieldService } from "./field-service";
-import { CombinedFormFieldService } from "./combined-form-field-service";
+import { CombinedFormFieldService } from "combined-form-field-service";
 
 export type ValueType<T> = T | null | undefined;
 
@@ -23,12 +23,43 @@ export interface IField {
   isValid: boolean;
   isInit: boolean;
 
-  validate?(): Promise<void>;
+  validate?: () => Promise<void>;
   reset() : void;
   setAsInit(): void;
+  touch(): void;
 }
 
-export type FormServiceValuesType = Record<string, FieldService<unknown> | Record<string, unknown>>;
+export interface IForm<T> {
+  fields: T;
+
+  validate: (type: ValidationType) => Promise<void>
+
+  keys: string[];
+
+  isValid: boolean;
+
+  isTouched: boolean;
+
+  canBeSubmitted: boolean;
+
+  disabled: boolean;
+
+  getValues: () => FormValues<T>
+
+  resetErrors: () => void;
+
+  setValuesAsInit: () => void;
+
+  reset: () => void;
+
+  disable: () => void;
+
+  enable: () => void;
+  
+  touch: () => void;
+}
+
+export type FormServiceValuesType = Record<string, FieldService<unknown> |  Record<string, CombinedFormFieldService> | Record<string, unknown>>
   
 export interface IFormable<T extends FormServiceValuesType = FormServiceValuesType> {
   formService: FormService<T>

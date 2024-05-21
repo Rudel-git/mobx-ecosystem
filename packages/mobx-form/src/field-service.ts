@@ -7,9 +7,10 @@ import mitt, { Emitter } from 'mitt';
 type FieldOptionsType = { onError?: boolean };
 
 export class FieldService<T = ValueType<unknown>> implements IField {
+  private _isListenerWorks = true;
   eventBus?: Emitter<{ ON_CHANGE: ValueType<T> }>;
 
-  validate?(): Promise<void>;
+  validate?: () => Promise<void>;
   _serviceType = 'field-service';
   private _initValue?: ValueType<T> = undefined;
   private _value?: ValueType<T> = undefined;
@@ -41,8 +42,13 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   }
 
   set value(value: ValueType<T>) {
+    const oldValue = this._value;
+
     this._value = value;
-    this.eventBus?.emit("ON_CHANGE", value);
+
+    if(oldValue !== value && this._isListenerWorks) {
+      this.eventBus?.emit("ON_CHANGE", value);
+    }
   }
 
   get error() {
@@ -77,7 +83,7 @@ export class FieldService<T = ValueType<unknown>> implements IField {
     return this._isBlurred;
   }
 
-  private set isBlurred(isBlurred: boolean) {
+  set isBlurred(isBlurred: boolean) {
     this._isBlurred = isBlurred;
   }
 
@@ -86,7 +92,20 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   }
 
   createListener = () => {
+    this._isListenerWorks = true;
     this.eventBus = mitt();
+  }
+
+  pauseListener = () => {
+    this._isListenerWorks = false;
+  }
+
+  resumeListener = () => {
+    this._isListenerWorks = true;
+  }
+
+  destroyListener = () => {
+    this.eventBus = undefined;
   }
 
   onChange = (_: any, value: ValueType<T>) => {
@@ -107,6 +126,10 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   setAsInit = () => {
     this.initValue = this.value;
     this.isBlurred = false;
+  }
+
+  touch = () => {
+    this.isBlurred = true;
   }
 
   // TODO: Rethink...

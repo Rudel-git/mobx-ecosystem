@@ -4,7 +4,7 @@
     "moduleResolution": "node",
     "removeComments": false,
     "sourceMap": true,
-    "target": "es5",
+    "target": "es6",
     "outDir": "dist",
     "declaration": true,
     "emitDeclarationOnly": true,
@@ -12,7 +12,7 @@
     "module": "esnext",
     "noEmitOnError": true,
     "lib": [
-      "es2018",
+      "ESNext",
       "DOM"
     ],
     "esModuleInterop": false,

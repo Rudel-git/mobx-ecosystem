@@ -2,10 +2,11 @@ import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, preSubmitValidationError, validate } from 'configure-form';
-import { FormErrors, FormValues, ValidationType } from './types';
+import { FormErrors, FormValues, IForm, ValidationType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
+import { AutocompleteFieldService } from 'autocompete-field-service';
 
-export class FormService<T extends Record<string, FieldService<any> | CombinedFormFieldService | Record<string, unknown>>> {
+export class FormService<T extends Record<string, FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any> | Record<string, unknown>>> implements IForm<T> {
   fields: T;
   validationSchema?: unknown;
 
@@ -144,7 +145,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
   };
 
   private getValue: any = (value: any) => {
-    if(value instanceof FieldService || value instanceof CombinedFormFieldService) {
+    if(value instanceof FieldService || value instanceof CombinedFormFieldService || value instanceof AutocompleteFieldService) {
       return value?.value
     }
     else if(typeof value === 'object') {
@@ -166,7 +167,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
   setFieldsByThis = (obj: any) => {
     const fields = {} as any;
     Object.keys(obj).forEach(key => {
-      if (obj[key] && obj[key] instanceof FieldService || obj[key] instanceof CombinedFormFieldService) {
+      if (obj[key] && obj[key] instanceof FieldService || obj[key] instanceof CombinedFormFieldService || obj[key] instanceof AutocompleteFieldService) {
         fields[key] = obj[key];
       }
     });
@@ -175,8 +176,8 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
     this.setValidationToFields();
   };
 
-  private bypassFields = <T>(fields: any, action: (field: FieldService<unknown> | CombinedFormFieldService, levelParams?: T) => void, levelParams?: any) => {
-    if(fields instanceof FieldService || fields instanceof CombinedFormFieldService) {
+  private bypassFields = <T>(fields: any, action: (field: FieldService<unknown> | CombinedFormFieldService | AutocompleteFieldService, levelParams?: T) => void, levelParams?: any) => {
+    if(fields instanceof FieldService || fields instanceof CombinedFormFieldService || fields instanceof AutocompleteFieldService) {
       // if(typeof fields.value === 'object') {
       //   this.bypassFields(fields.value, action, levelParams)
       // }
@@ -272,4 +273,8 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
   enable = () => {
     this.bypassFields(this.fields, (field) => field.disabled = false)
   };
+  
+  touch = () => {
+    this.bypassFields(this.fields, (field) => field.touch())
+  }
 }
