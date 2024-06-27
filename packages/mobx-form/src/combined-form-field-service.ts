@@ -105,13 +105,13 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   reset = () => {
-    this._value = this.initValue;
+    this._value = this.initValue.slice(0); // copy array without objects
     this._value.forEach(it => it.formService.reset());
     this.setTouched(false);
   }
 
   setAsInit = () => {
-    this._initValue = this.value;
+    this.initValue = this.value;
     this._value.forEach(it => it.formService.setValuesAsInit());
     this.setTouched(false);
   }
