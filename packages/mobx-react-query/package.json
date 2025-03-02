@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@mobx-ecosystem/mobx-react-query",
   "private": false,
-  "version": "2.0.16",
+  "version": "2.0.18",
   "description": "a wrapper that allows you to convenietly use react-query features with mobx",
   "main": "dist/index.js",
   "module": "dist/index.js",
