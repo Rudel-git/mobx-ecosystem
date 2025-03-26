@@ -1,14 +1,15 @@
-import { FormValues, IField, IFormable } from './types';
+import { FormServiceValuesType, FormValues, IField, IFormable, ValidationType } from './types';
 import { makeAutoObservable } from 'mobx';
 
-export class CombinedFormFieldService<T extends IFormable = IFormable> implements IField {
-  validate?(): Promise<void>;
+export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType> = IFormable<FormServiceValuesType>> implements IField {
   private _touched = false;
   private _disabled = false;
   private _error?: string = undefined;
 
   private _initValue: T[] = [];
   private _value: T[] = [];
+
+  _validate?: () => Promise<unknown>;
 
   constructor(initValue?: T[]) {
     makeAutoObservable(this);
@@ -25,14 +26,7 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     this._value = _initValue.slice(0); // copy array without objects
 
     this.setTouched(false);
-    this._validate();
-
-    // вариант, когда используется сразу 2 схемы. На массив объектов, а в объекте своя схема
-    // this._initValue.forEach(it => {
-    //   it.formService.validate = () => {
-    //     return it.formService.validate();
-    //   }
-    // })
+    this.validate?.('only-touched');
   }
 
   get value() {
@@ -83,6 +77,7 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
     return Boolean(this.value.length);
   }
 
+
   private setTouched = (touched: boolean) => {
     this._touched = touched;
   }
@@ -90,18 +85,13 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   add = (value: T) => {
     this.value.push(value);
     this.setTouched(true);
-    this._validate();
+    this.validate?.('only-touched');
   }
 
   removeByIndex = (index: number) => {
     this.value.splice(index, 1);
     this.setTouched(true);
-    this._validate();
-  }
-
-  private _validate = () => {
-    this.value.forEach(it => it.formService.validate());
-    this.validate?.();
+    this.validate?.('only-touched');
   }
 
   reset = () => {
@@ -121,6 +111,23 @@ export class CombinedFormFieldService<T extends IFormable = IFormable> implement
   }
 
   touch = () => {
+    this.value.forEach(it => it.formService.touch());
     this.setTouched(true);
+  }
+
+  validateFields = (type: ValidationType = 'everything') => {
+    return Promise.all(this.value.map(it => it.formService.validate(type)));
+  }
+
+  validate = async (type: ValidationType = 'everything') => {
+    return Promise.all([this._validate?.(), this.validateFields(type)])
+  }
+
+  disable = () => {
+    this.disabled = true;
+  }
+
+  enable = () => {
+    this.disabled = false;
   }
 }

@@ -4,8 +4,11 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
 
 export class QueryService {
+  unsubscribe?: () => void;
+
   queryClient = queryClient;
-  observer = new QueryObserver(queryClient, {});
+  observer?: QueryObserver = new QueryObserver(queryClient, {});
+  private queryParams?: QueryObserverOptions<unknown, unknown, unknown, unknown, QueryKey>;
   queryResult?: QueryObserverResult;
 
   /**
@@ -56,7 +59,7 @@ export class QueryService {
     this.isQueryFullLoading = true;
 
     return new Promise<TData>((resolve, reject) => {
-      const _params = {
+      this.queryParams = {
         ...params,
         retry: false,
         onSuccess: (data: TData) => {
@@ -78,9 +81,9 @@ export class QueryService {
         },
       } as QueryObserverOptions<unknown, unknown, unknown, unknown, QueryKey>;
 
-      this.observer.setOptions(_params);
+      this.observer?.setOptions(this.queryParams);
 
-      this.observer.subscribe(result => {
+      this.unsubscribe = this.observer?.subscribe(result => {
         runInAction(() => {
           this.queryResult = result;
           this.isQueryLoading = Boolean(result?.isLoading);
@@ -91,15 +94,28 @@ export class QueryService {
       // onSuccess будет вызываться всегда 1 раз
       // 1 вариант - getOptimisticResult вызовет его, если это запрос. Наш вызов не сработает, так как запрос не успеет выполнится
       // 2 вариант - запрос не выполняется, данные уже есть в кэше - выполняется наш onSuccess
-      this.queryResult = this.observer.getOptimisticResult({
+      this.queryResult = this.observer?.getOptimisticResult({
         useErrorBoundary: false,
         refetchOnReconnect: false,
-        ..._params,
+        ...this.queryParams,
       });
 
-      if (this.queryResult.data) {
-        _params.onSuccess && _params.onSuccess(this.queryResult.data);
+      if (this.queryResult?.data) {
+        this.queryParams.onSuccess && this.queryParams.onSuccess(this.queryResult.data);
       }
     });
   };
+
+  dispose = () => {
+    if(this.observer) {
+      // this.observer.remove();
+      this.unsubscribe?.();
+      this.observer.destroy();
+      this.observer = undefined;
+
+      this.queryResult = undefined;
+      this.queryParams = undefined;
+      this.unsubscribe = undefined;
+    }
+  }
 }

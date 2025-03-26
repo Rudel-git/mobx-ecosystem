@@ -16,23 +16,17 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
     return this.field.validate;
   }
 
-  set validate(validate: (() => Promise<void>) | undefined) {
+  set validate(validate: (() => Promise<unknown>) | undefined) {
     this.field.validate = validate;
   }
 
   setValue = (value: ValueType<T>, { inputValue = "", withNotification = true, withBlur = true }) => {
     if(!withNotification) {
-      this.field.pauseListener();
-      this.inputField.pauseListener();
-
       this.field.value = value;
       this.inputField.value = inputValue;
 
       this.field.validate?.();
       this.inputField.validate?.();
-
-      this.field.resumeListener();
-      this.inputField.resumeListener();
     }
     else {
       this.field.value= value;
@@ -57,6 +51,14 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
 
   touch = () => {
     this.field.touch();
+  }
+
+  disable = () => {
+    this.field.disabled = true;
+  }
+
+  enable = () => {
+    this.field.disabled = false;
   }
 
   get value() {

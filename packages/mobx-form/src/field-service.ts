@@ -1,16 +1,18 @@
-import { isEqual } from 'lodash';
 import { makeAutoObservable } from 'mobx';
 import { IField, ValueType } from './types';
-import { isObject } from 'utils';
-import mitt, { Emitter } from 'mitt';
+import { isEqual, isObject } from './utils';
 
-type FieldOptionsType = { onError?: boolean };
+type FieldOptionsType<T> = { onError?: boolean, onChange?: (value: ValueType<T>) => void; beforeChange?: (value: ValueType<T>) => void | 'abort';  };
 
-export class FieldService<T = ValueType<unknown>> implements IField {
-  private _isListenerWorks = true;
-  eventBus?: Emitter<{ ON_CHANGE: ValueType<T> }>;
-
-  validate?: () => Promise<void>;
+type FieldProps<T> = {
+  value: T,
+  onChange: (_: any, value: ValueType<T>) => void;
+  onBlur: (_: any) => void;
+  error?: string;
+  disabled?: boolean;
+}
+export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = FieldProps<T>> implements IField {
+  validate?: () => Promise<unknown>;
   _serviceType = 'field-service';
   private _initValue?: ValueType<T> = undefined;
   private _value?: ValueType<T> = undefined;
@@ -18,9 +20,9 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   private _disabled = false;
   private _isBlurred = false;
 
-  options?: FieldOptionsType;
+  options?: FieldOptionsType<T>;
 
-  constructor(initValue?: ValueType<T>, options?: FieldOptionsType) {
+  constructor(initValue?: ValueType<T>, options?: FieldOptionsType<T>) {
     makeAutoObservable(this);
 
     this.initValue = initValue;
@@ -34,7 +36,7 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   set initValue(initValue: ValueType<T>) {
     this._initValue = initValue;
     this._value = initValue;
-    this.validate && this.validate();
+    this.validate?.();
   }
 
   get value() {
@@ -42,12 +44,16 @@ export class FieldService<T = ValueType<unknown>> implements IField {
   }
 
   set value(value: ValueType<T>) {
-    const oldValue = this._value;
+    const result = this.options?.beforeChange?.(value);
+    if(result === 'abort') {
+      return;
+    }
 
+    const oldValue = this._value;
     this._value = value;
 
-    if(oldValue !== value && this._isListenerWorks) {
-      this.eventBus?.emit("ON_CHANGE", value);
+    if(oldValue !== value) {
+      this.options?.onChange?.(value)
     }
   }
 
@@ -91,23 +97,6 @@ export class FieldService<T = ValueType<unknown>> implements IField {
     return !this.isInit || this.isBlurred
   }
 
-  createListener = () => {
-    this._isListenerWorks = true;
-    this.eventBus = mitt();
-  }
-
-  pauseListener = () => {
-    this._isListenerWorks = false;
-  }
-
-  resumeListener = () => {
-    this._isListenerWorks = true;
-  }
-
-  destroyListener = () => {
-    this.eventBus = undefined;
-  }
-
   onChange = (_: any, value: ValueType<T>) => {
     this.value = value;
     this.validate?.();
@@ -132,8 +121,16 @@ export class FieldService<T = ValueType<unknown>> implements IField {
     this.isBlurred = true;
   }
 
+  disable = () => {
+    this.disabled = true;
+  }
+
+  enable = () => {
+    this.disabled = false;
+  }
+
   // TODO: Rethink...
-  get props() {
+  get props(): P {
     let commonProps: any = {
       value: this.value,
       error: this.error,

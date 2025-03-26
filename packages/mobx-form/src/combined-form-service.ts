@@ -1,4 +1,4 @@
-import { FormService } from "form-service";
+import { FormService } from "./form-service";
 import { makeAutoObservable } from "mobx";
 import { IForm, ValidationType } from "types";
 

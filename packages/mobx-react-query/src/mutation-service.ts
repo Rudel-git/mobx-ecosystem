@@ -4,8 +4,10 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
 
 export class MutationService {
+  unsubscribe?: () => void;
   queryClient = queryClient;
-  observer = new MutationObserver(queryClient, {});
+  observer?:  MutationObserver = new MutationObserver(queryClient, {});
+  private params?: MutationObserverOptions;
 
   mutationResult?: MutationObserverResult<
     unknown,
@@ -28,6 +30,16 @@ export class MutationService {
     makeAutoObservable(this);
   }
 
+  dispose = () => {
+    if(this.observer) {
+      this.unsubscribe?.();
+      this.observer.reset();
+      this.observer = undefined;
+      this.mutationResult = undefined;
+      this.unsubscribe = undefined;
+    }
+  }
+
   /** Аналог useMutation */
   fetch = async <
     TData = unknown,
@@ -42,7 +54,7 @@ export class MutationService {
     this.isMutationFullLoading = true;
 
     return new Promise<TData>((resolve, reject) => {
-      const _params = {
+       this.params = {
         ...params,
         onSuccess: (data: TData, variables: TVariables, context: TContext | undefined) => {
           params.onSuccess?.(data, variables, context);
@@ -66,9 +78,9 @@ export class MutationService {
         },
       } as MutationObserverOptions;
 
-      this.observer.setOptions(_params);
+      this.observer?.setOptions(this.params);
 
-      this.observer.subscribe(result => {
+      this.unsubscribe = this.observer?.subscribe(result => {
         runInAction(() => {
           this.isMutationLoading = result.isLoading;
 
@@ -81,7 +93,7 @@ export class MutationService {
         });
       });
 
-      this.observer.mutate().catch(error => options?.rejectable && reject(error));
+      this.observer?.mutate().catch(error => options?.rejectable && reject(error));
     });
   };
 }

@@ -1,12 +1,12 @@
-import { makeAutoObservable } from 'mobx';
+import { action, computed, makeAutoObservable, makeObservable, observable } from 'mobx';
 
 import { FieldService } from './field-service';
-import { _checkConfiguration, preSubmitValidationError, validate } from 'configure-form';
-import { FormErrors, FormValues, IForm, ValidationType } from './types';
+import { _checkConfiguration, preSubmitValidationError, validate } from './configure-form';
+import { FormErrors, FormServiceValuesType, FormValues, IForm, ValidationType, ValueType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
-import { AutocompleteFieldService } from 'autocompete-field-service';
+import { AutocompleteFieldService } from './autocompete-field-service';
 
-export class FormService<T extends Record<string, FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any> | Record<string, unknown>>> implements IForm<T> {
+export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   fields: T;
   validationSchema?: unknown;
 
@@ -18,7 +18,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
   ) {
     _checkConfiguration();
     
-    makeAutoObservable(this);
+    makeAutoObservable(this)
 
     this.fields = fields;
     this.validationSchema = validationSchema;
@@ -47,6 +47,15 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
    */
   validate = async (type: ValidationType = 'only-touched') => {
     const fieldValues = this.getValues();
+    
+    // валидация для сложных форм снизу -> вверх
+    await this.bypassFields(this.fields, async (field) => {
+      if(field instanceof CombinedFormFieldService) {
+        return await field.validateFields?.(type);
+      }
+    })
+
+    // валидация для простейших полей сверху -> вниз
     const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<T>;
 
     if(errors && Object.keys(errors || []).length != 0) {
@@ -141,7 +150,7 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
       values[key] = this.getValue(this.fields[key]);
     }
 
-    return values as FormValues<T>;
+    return values as FormValues<ValueType<T>>;
   };
 
   private getValue: any = (value: any) => {
@@ -176,25 +185,32 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
     this.setValidationToFields();
   };
 
-  private bypassFields = <T>(fields: any, action: (field: FieldService<unknown> | CombinedFormFieldService | AutocompleteFieldService, levelParams?: T) => void, levelParams?: any) => {
+  private bypassFields = <T>(fields: any, action: (field: FieldService<unknown> | CombinedFormFieldService | AutocompleteFieldService, levelParams?: T) => void, levelParams?: any): unknown | Promise<unknown> => {
     if(fields instanceof FieldService || fields instanceof CombinedFormFieldService || fields instanceof AutocompleteFieldService) {
       // if(typeof fields.value === 'object') {
       //   this.bypassFields(fields.value, action, levelParams)
       // }
 
-      action(fields, levelParams);
+      return action(fields, levelParams);
     }
     else if(typeof fields === 'object') {
-      Object.keys(fields || {}).forEach(key => {
-        this.bypassFields(fields?.[key], action, levelParams?.[key]);
-      });
+      return Promise.all(Object.keys(fields || {}).map(key => {
+        return this.bypassFields(fields?.[key], action, levelParams?.[key]);
+      }));
     }
   }
 
   private setValidationToFields = () => {
     this.bypassFields(
       this.fields, 
-      (field) => field.validate = this.validate, 
+      (field) => {
+        if(!(field instanceof CombinedFormFieldService)) {
+          field.validate = this.validate
+        }
+        else {
+          field._validate = this.validate;
+        }
+      }, 
     );
   }
   
@@ -264,14 +280,14 @@ export class FormService<T extends Record<string, FieldService<any> | CombinedFo
    * Pass true to the property 'disabled'
    */
   disable = () => {
-    this.bypassFields(this.fields, (field) => field.disabled = true)
+    this.bypassFields(this.fields, (field) => field.disable())
   };
 
   /**
    * Pass false to the property 'disabled'
    */
   enable = () => {
-    this.bypassFields(this.fields, (field) => field.disabled = false)
+    this.bypassFields(this.fields, (field) => field.enable())
   };
   
   touch = () => {

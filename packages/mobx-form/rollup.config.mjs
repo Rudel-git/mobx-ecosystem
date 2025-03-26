@@ -10,17 +10,31 @@ export default [
     input: 'src/index.ts',
     output: [
       {
-        file: 'dist/index.js',
+        file: 'dist/index.dev.js',
+        format: 'esm',
+        sourcemap: true,
+      }
+    ],
+    external: ['mobx'],
+    plugins: [
+      external(), 
+      typescript({ tsconfig: `./tsconfig.json` }), 
+    ]
+  },
+  {
+    input: 'src/index.ts',
+    output: [
+      {
+        file: 'dist/index.prod.js',
         format: 'esm',
         sourcemap: false,
       }
     ],
-    external: ['mobx', 'lodash'],
+    external: ['mobx'],
     plugins: [
       external(), 
-      //resolve(),
       typescript({ tsconfig: `./tsconfig.json` }), 
       terser()
     ]
-  }, 
+  },  
 ];

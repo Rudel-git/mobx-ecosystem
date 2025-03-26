@@ -1,5 +1,7 @@
+import { ValueType } from "./types";
+
 export type ValidateFunction = 
-  (fieldValues: Record<string, unknown>, validationSchema: unknown) => Promise<Record<string, string>>;
+  (fieldValues: Record<string, ValueType<unknown>>, validationSchema: unknown) => Promise<Record<string, string>>;
 
 export type PreSubmitValidationFunction = 
   () => void;
