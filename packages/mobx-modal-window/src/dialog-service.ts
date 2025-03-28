@@ -55,8 +55,7 @@ export class DialogService {
     });
   };
 
-  close = (e: unknown, reason: DialogCloseReasonType) => {
-    this.reason = reason;
+  close = () => {
     this.modalService.setIsOpen(false);
   };
 
@@ -68,10 +67,29 @@ export class DialogService {
     }
   }
 
+  confirm = () => {
+    this.reason = 'ok';
+
+    if(this.closeAfterClicked) {
+      this.modalService.setIsOpen(false);
+    }
+  }
+
+  cancel = () => {
+    this.reason = 'cancel';
+    
+    if(this.closeAfterClicked) {
+      this.modalService.setIsOpen(false);
+    }
+  }
+
+
   get props() {
     return {
       open: this.isOpen,
       onClose: this.onCloseHandler,
+      confirm: this.confirm,
+      cancel: this.cancel
     };
   }
 }
