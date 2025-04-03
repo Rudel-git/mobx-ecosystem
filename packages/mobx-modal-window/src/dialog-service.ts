@@ -9,8 +9,9 @@ export class DialogService {
 
   disposer?: IReactionDisposer;
   reason?: DialogCloseReasonType;
+  onOk?: () => void;
 
-  private closeAfterClicked = true;
+  private closeAfterOk = true;
 
   constructor() {
     makeAutoObservable(this);
@@ -32,12 +33,13 @@ export class DialogService {
    *
    * @returns возвращает промис и резолвит только когда модалка закроется
    */
-  open = (settings?: { closeAfterClicked: boolean }) => {
-    const { closeAfterClicked =  true }= settings || {};
+  open = (settings?: { closeAfterOk?: boolean, onOk?: () => void }) => {
+    const { closeAfterOk =  true, onOk }= settings || {};
 
     this.modalService.setIsOpen(true);
     this.reason = undefined;
-    this.closeAfterClicked = closeAfterClicked;
+    this.closeAfterOk = closeAfterOk;
+    this.onOk = onOk;
 
     return new Promise<DialogCloseReasonType>(resolve => {
       if (this.disposer) {
@@ -45,7 +47,7 @@ export class DialogService {
       }
 
       this.disposer = when(
-        () => (!this.isOpen || !this.closeAfterClicked) && Boolean(this.reason),
+        () => (!this.isOpen) && Boolean(this.reason),
         () => {
           if(this.reason) {
             resolve(this.reason)
@@ -61,28 +63,22 @@ export class DialogService {
 
   onCloseHandler = (e: unknown, reason: DialogCloseReasonType) => {
     this.reason = reason;
-
-    if(this.closeAfterClicked) {
-      this.modalService.setIsOpen(false);
-    }
   }
 
   confirm = () => {
     this.reason = 'ok';
 
-    if(this.closeAfterClicked) {
+    if(this.closeAfterOk) {
       this.modalService.setIsOpen(false);
     }
+
+    this.onOk?.();
   }
 
   cancel = () => {
     this.reason = 'cancel';
-    
-    if(this.closeAfterClicked) {
-      this.modalService.setIsOpen(false);
-    }
+    this.modalService.setIsOpen(false);
   }
-
 
   get props() {
     return {
