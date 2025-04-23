@@ -3,7 +3,7 @@ import { makeAutoObservable } from "mobx";
 import { AutocompleteFieldOptionsType, IField, ValueType } from "./types";
 
 export class AutocompleteFieldService<T = ValueType<unknown>> implements IField {
-  field = new FieldService<T>(null);
+  field: FieldService<T>;
   inputField = new FieldService<string>("");
 
   options?: AutocompleteFieldOptionsType<T>;
@@ -11,8 +11,10 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
   constructor(initValue?: ValueType<T>, options?: AutocompleteFieldOptionsType<T>) {
     makeAutoObservable(this);
 
-    this.field.initValue = initValue;
     this.options = options;
+
+    this.field = new FieldService<T>(null, { onChange: options?.onChange, beforeOnChange: options?.beforeOnChange });
+    this.field.initValue = initValue;
   }
 
   get validate() {
@@ -121,8 +123,8 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
   get props() {
     return {
       ...this.field.props,
-      inputValue: this.inputField.value,
-      onInputChange: this.onInputChange
+      // inputValue: this.inputField.value,
+      onSearchChange: this.onInputChange
     };
   }
 }

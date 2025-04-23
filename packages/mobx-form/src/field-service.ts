@@ -42,7 +42,7 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
   }
 
   set value(value: ValueType<T>) {
-    const result = this.options?.beforeChange?.(value);
+    const result = this.options?.beforeOnChange?.(value);
     if(result === 'abort') {
       return;
     }

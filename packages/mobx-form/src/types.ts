@@ -87,7 +87,7 @@ export type ValidationType = 'only-touched' | 'everything';
 type OnChangeHandler<T> = (value: ValueType<T>) => void;
 type BeforeChangeHandler<T> = (value: ValueType<T>) => void | 'abort';
 
-export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeChange?: BeforeChangeHandler<T> };
+export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeOnChange?: BeforeChangeHandler<T> };
 
 export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
   onInputChange?: OnChangeHandler<string>,
