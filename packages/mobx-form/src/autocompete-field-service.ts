@@ -1,15 +1,18 @@
 import { FieldService } from "./field-service";
 import { makeAutoObservable } from "mobx";
-import { IField, ValueType } from "./types";
+import { AutocompleteFieldOptionsType, IField, ValueType } from "./types";
 
 export class AutocompleteFieldService<T = ValueType<unknown>> implements IField {
   field = new FieldService<T>(null);
   inputField = new FieldService<string>("");
+
+  options?: AutocompleteFieldOptionsType<T>;
   
-  constructor(initValue?: ValueType<T>) {
+  constructor(initValue?: ValueType<T>, options?: AutocompleteFieldOptionsType<T>) {
     makeAutoObservable(this);
 
     this.field.initValue = initValue;
+    this.options = options;
   }
 
   get validate() {
@@ -46,7 +49,17 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
   }
 
   onInputChange = (e: any, value: string) => {
+    const result = this.options?.onInputBeforeChange?.(value);
+    if(result === 'abort') {
+      return;
+    }
+
+    const oldValue = this.inputField.value;
     this.inputField.value = value;
+
+    if(oldValue !== value) {
+      this.options?.onInputChange?.(value)
+    }
   }
 
   touch = () => {

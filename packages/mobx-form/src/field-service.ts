@@ -1,8 +1,6 @@
 import { makeAutoObservable } from 'mobx';
-import { IField, ValueType } from './types';
+import { FieldOptionsType, IField, ValueType } from './types';
 import { isEqual, isObject } from './utils';
-
-type FieldOptionsType<T> = { onError?: boolean, onChange?: (value: ValueType<T>) => void; beforeChange?: (value: ValueType<T>) => void | 'abort';  };
 
 type FieldProps<T> = {
   value: T,

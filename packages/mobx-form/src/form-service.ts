@@ -217,23 +217,31 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
   * Set object to init values by form service keys
   */
-  setInitValues = (values: Partial<FormValues<T>>) => {
+  setInitValues = (values: Partial<FormValues<T>>, { validate }: { validate?: boolean } = {}) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.initValue = levelParams, 
       values
     );
+
+    if(validate) {
+      this.validate();
+    }
   };
 
   /**
   * Set object to values by form service keys
   */
-  setValues = (values: Partial<FormValues<T>>) => {
+  setValues = (values: Partial<FormValues<T>>, { validate }: { validate?: boolean } = {}) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.value = levelParams, 
       values
     );
+
+    if(validate) {
+      this.validate();
+    }
   };
 
   /**
