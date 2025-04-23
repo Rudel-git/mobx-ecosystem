@@ -90,6 +90,6 @@ type BeforeChangeHandler<T> = (value: ValueType<T>) => void | 'abort';
 export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeChange?: BeforeChangeHandler<T> };
 
 export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
-  onInputChange: OnChangeHandler<string>,
-  onInputBeforeChange: BeforeChangeHandler<string>
+  onInputChange?: OnChangeHandler<string>,
+  onInputBeforeChange?: BeforeChangeHandler<string>
 }
