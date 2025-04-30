@@ -2,7 +2,7 @@ import { action, computed, makeAutoObservable, makeObservable, observable } from
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, preSubmitValidationError, validate } from './configure-form';
-import { FormErrors, FormServiceValuesType, FormValues, IForm, MethodOptions, ValidationType, ValueType } from './types';
+import { FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ValidationType, ValueType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 import { AutocompleteFieldService } from './autocompete-field-service';
 
@@ -277,12 +277,23 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     })
   };
 
+  private getKeys = ({ keyType = 'include', keys = [] } : KeyParams<keyof T>) => {
+    if(keyType === 'include') {
+      return keys;
+    }
+    else {
+      return Object.keys(this.fields).filter(fieldKey => !keys.includes(fieldKey))
+    }
+  }
+
   /**
    * Reset fields to their own initial values
    */
-  reset = (keys?: (keyof T)[] ) => {
-    if(keys) {
-      keys.forEach(key => {
+  reset = (keyParams?: KeyParams<keyof T>) => {
+    if(keyParams?.keys) {
+      const _keys = this.getKeys(keyParams);
+     
+      _keys.forEach(key => {
         const field = this.fields[key] as FieldService<unknown>
         field.reset();
       });

@@ -1,6 +1,6 @@
 import { FormService } from "./form-service";
 import { makeAutoObservable } from "mobx";
-import { IForm, ValidationType } from "types";
+import { IForm, KeyParams, ValidationType } from "types";
 
 export class CombinedFormService implements IForm<any>{
   formServices: FormService<any>[] = [];
@@ -55,8 +55,8 @@ export class CombinedFormService implements IForm<any>{
     return this.formServices.forEach(it => it.setValuesAsInit());
   }
 
-  reset = () => {
-    return this.formServices.forEach(it => it.reset());
+  reset = (keyParams?: KeyParams<any> ) => {
+    return this.formServices.forEach(it => it.reset(keyParams));
   }
 
   disable = () => {

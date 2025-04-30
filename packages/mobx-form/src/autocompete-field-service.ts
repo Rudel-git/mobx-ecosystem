@@ -1,6 +1,6 @@
 import { FieldService } from "./field-service";
 import { makeAutoObservable } from "mobx";
-import { AutocompleteFieldOptionsType, IField, ValueType } from "./types";
+import { AutocompleteFieldOptionsType, IField, KeyParams, ValueType } from "./types";
 
 export class AutocompleteFieldService<T = ValueType<unknown>> implements IField {
   field: FieldService<T>;
@@ -43,7 +43,7 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
     }
   }
 
-  reset =() => {
+  reset = () => {
     this.field.reset();
   }
   setAsInit = () => {

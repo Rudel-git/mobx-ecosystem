@@ -17,6 +17,8 @@ export type FormErrors<Type> = Type extends IField
       -readonly [Property in keyof Type]: FormErrors<Type[Property]>;
     };
 
+export type KeyParams<T> = { keyType?: 'include' | 'exclude', keys?: T[]  | any[] }
+
 export interface IField {
   value: unknown;
   error?: string;
@@ -53,7 +55,7 @@ export interface IForm<T> {
 
   setValuesAsInit: () => void;
 
-  reset: () => void;
+  reset: (keyParams?: KeyParams<keyof T>) => void;
 
   disable: () => void;
 
@@ -62,9 +64,8 @@ export interface IForm<T> {
   touch: () => void;
 }
 
-//  Record<string, FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any> | Record<string, unknown>>
-export type FormServiceValuesType = Record<string, FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any> | Record<string, unknown>>
-  
+export type FormServiceValuesType = Record<string, FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any>>
+
 export interface IFormable<T extends FormServiceValuesType = FormServiceValuesType> {
   formService: FormService<T>
 }

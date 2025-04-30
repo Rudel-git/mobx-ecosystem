@@ -1,4 +1,4 @@
-import { FormServiceValuesType, FormValues, IField, IFormable, ValidationType } from './types';
+import { FormServiceValuesType, FormValues, IField, IFormable, KeyParams, ValidationType } from './types';
 import { makeAutoObservable } from 'mobx';
 
 export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType> = IFormable<FormServiceValuesType>> implements IField {

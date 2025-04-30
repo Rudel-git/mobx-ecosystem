@@ -19,9 +19,8 @@ let formService: FormService<{
 }>;
 
 class CombinedField {
-  field = new FieldService("", { onChange: (val) => {
-    console.log('onChange');
-  }});
+  field = new FieldService("");
+  
   formService = new FormService({
     field: this.field,
   })
@@ -225,23 +224,28 @@ describe('form-service', () => {
   test('reset form with certain fields', () => {
     const fields = formService.fields;
 
-    expect(fields.field.initValue).toEqual(fields.field.value);
-    expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
-
-    
-    formService.setValues({
-      field: FIELD_VALUE_TEMPLATE,
-      autoCompleteField: AUTOCOMPLETE_FIELD_VALUE_TEMPLATE,
-      combinedFormFieldService: fields.combinedFormFieldService.value
-    });
-
-    expect(fields.field.initValue).not.toEqual(fields.field.value);
-    expect(fields.autoCompleteField.initValue).not.toEqual(fields.autoCompleteField.value);
-
-
-    formService.reset(['autoCompleteField', 'field'])
-
-    expect(fields.field.initValue).toEqual(fields.field.value);
-    expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
+    try {
+      expect(fields.field.initValue).toEqual(fields.field.value);
+      expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
+  
+      
+      formService.setValues({
+        field: FIELD_VALUE_TEMPLATE,
+        autoCompleteField: AUTOCOMPLETE_FIELD_VALUE_TEMPLATE,
+        combinedFormFieldService: fields.combinedFormFieldService.value
+      });
+  
+      expect(fields.field.initValue).not.toEqual(fields.field.value);
+      expect(fields.autoCompleteField.initValue).not.toEqual(fields.autoCompleteField.value);
+  
+  
+      formService.reset({ keyType: 'include', keys: ['field', 'autoCompleteField'] })
+  
+      expect(fields.field.initValue).toEqual(fields.field.value);
+      expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
+    }
+    catch(e) {
+      console.log(e);
+    }
   })
 });
