@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { FieldOptionsType, IField, ValueType } from './types';
+import { FieldOptionsType, IField, MethodOptions, ValueType } from './types';
 import { isEqual, isObject } from './utils';
 
 type FieldProps<T> = {
@@ -95,7 +95,15 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
     return !this.isInit || this.isBlurred
   }
 
-  onChange = (_: any, value: ValueType<T>) => {
+  setValue = (value: ValueType<T>, { validate }: MethodOptions = {}) => {
+    this.value = value;
+
+    if(validate) {
+      this.validate?.();
+    }
+  }
+
+  private onChange = (_: any, value: ValueType<T>) => {
     this.value = value;
     this.validate?.();
   }

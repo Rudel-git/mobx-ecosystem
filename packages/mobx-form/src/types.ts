@@ -93,3 +93,5 @@ export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
   onInputChange?: OnChangeHandler<string>,
   onInputBeforeChange?: BeforeChangeHandler<string>
 }
+
+export type MethodOptions = { validate?: boolean }

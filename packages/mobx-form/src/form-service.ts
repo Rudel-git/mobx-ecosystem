@@ -2,9 +2,10 @@ import { action, computed, makeAutoObservable, makeObservable, observable } from
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, preSubmitValidationError, validate } from './configure-form';
-import { FormErrors, FormServiceValuesType, FormValues, IForm, ValidationType, ValueType } from './types';
+import { FormErrors, FormServiceValuesType, FormValues, IForm, MethodOptions, ValidationType, ValueType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 import { AutocompleteFieldService } from './autocompete-field-service';
+
 
 export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   fields: T;
@@ -232,7 +233,7 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
   * Set object to values by form service keys
   */
-  setValues = (values: Partial<FormValues<T>>, { validate }: { validate?: boolean } = {}) => {
+  setValues = (values: Partial<FormValues<T>>, { validate }: MethodOptions = {}) => {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => field.value = levelParams, 
@@ -240,7 +241,7 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     );
 
     if(validate) {
-      this.validate();
+      this.validate('everything');
     }
   };
 
@@ -279,8 +280,19 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
    * Reset fields to their own initial values
    */
-  reset = () => {
-    this.bypassFields(this.fields, (field) => field.reset())
+  reset = (keys?: (keyof T)[] ) => {
+    if(keys) {
+      keys.forEach(key => {
+        const field = this.fields[key] as FieldService<unknown>
+        field.reset();
+      });
+    }
+    else {
+      this.bypassFields(this.fields, (field) => {
+        field.reset()
+      })
+    }
+   
     this.validate();
   };
 

@@ -222,7 +222,26 @@ describe('form-service', () => {
     fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(it.formService.fields.field.value))
   })
 
-  test('onChnage', () => {
-    formService.fields.field.onChange({}, 'test');
+  test('reset form with certain fields', () => {
+    const fields = formService.fields;
+
+    expect(fields.field.initValue).toEqual(fields.field.value);
+    expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
+
+    
+    formService.setValues({
+      field: FIELD_VALUE_TEMPLATE,
+      autoCompleteField: AUTOCOMPLETE_FIELD_VALUE_TEMPLATE,
+      combinedFormFieldService: fields.combinedFormFieldService.value
+    });
+
+    expect(fields.field.initValue).not.toEqual(fields.field.value);
+    expect(fields.autoCompleteField.initValue).not.toEqual(fields.autoCompleteField.value);
+
+
+    formService.reset(['autoCompleteField', 'field'])
+
+    expect(fields.field.initValue).toEqual(fields.field.value);
+    expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
   })
 });
