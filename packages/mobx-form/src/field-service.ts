@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { computed, makeAutoObservable } from 'mobx';
 import { FieldOptionsType, IField, MethodOptions, ValueType } from './types';
 import { isEqual, isObject } from './utils';
 
@@ -64,7 +64,7 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
   }
 
   get disabled() {
-    return this._disabled;
+    return this._disabled || Boolean(this.options?.disabledFn?.());
   }
 
   set disabled(disabled: boolean) {
@@ -93,6 +93,10 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
 
   get isTouched() {
     return !this.isInit || this.isBlurred
+  }
+
+  setOptions = (options?: FieldOptionsType<T>) => {
+    this.options = options;
   }
 
   setValue = (value: ValueType<T>, { validate }: MethodOptions = {}) => {
