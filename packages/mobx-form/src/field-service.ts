@@ -1,4 +1,4 @@
-import { computed, makeAutoObservable } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import { FieldOptionsType, IField, MethodOptions, ValueType } from './types';
 import { isEqual, isObject } from './utils';
 
@@ -18,13 +18,13 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
   private _disabled = false;
   private _isBlurred = false;
 
-  options?: FieldOptionsType<T>;
+  options: FieldOptionsType<T> = {};
 
   constructor(initValue?: ValueType<T>, options?: FieldOptionsType<T>) {
     makeAutoObservable(this);
 
     this.initValue = initValue;
-    this.options = options;
+    this.options = options || {};
   }
 
   get initValue() {
@@ -32,7 +32,7 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
   }
 
   set initValue(initValue: ValueType<T>) {
-    this._initValue = initValue;
+    this._initValue = initValue || this._initValue;
     this._value = initValue;
     this.validate?.();
   }
@@ -95,7 +95,11 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
     return !this.isInit || this.isBlurred
   }
 
-  setOptions = (options?: FieldOptionsType<T>) => {
+  setDisabledFn = (disabledFn: FieldOptionsType<T>['disabledFn']) => {
+    this.options.disabledFn = disabledFn;
+  }
+
+  setOptions = (options: FieldOptionsType<T>) => {
     this.options = options;
   }
 

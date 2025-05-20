@@ -3,18 +3,20 @@ import { FormService } from "./form-service";
 import { CombinedFormFieldService } from "./combined-form-field-service";
 import { AutocompleteFieldService } from "./autocompete-field-service";
 
+export type WithFormService = { formService: FormService<any> }
+
 export type ValueType<T> = T | null | undefined;
 
 export type FormValues<Type> = Type extends IField
   ? Type['value']
   : {
-      -readonly [Property in keyof ValueType<Type>]: FormValues<Type[Property]>;
+      -readonly [Property in keyof Type]: Type[Property] extends WithFormService ? FormValues<Type[Property]['formService']['fields']> : FormValues<Type[Property]>;
     };
 
 export type FormErrors<Type> = Type extends IField
   ? Type['error']
   : {
-      -readonly [Property in keyof Type]: FormErrors<Type[Property]>;
+      -readonly [Property in keyof Type]: Type[Property] extends WithFormService ? FormErrors<Type[Property]['formService']['fields']> : FormErrors<Type[Property]>;
     };
 
 export type KeyParams<T> = { keyType?: 'include' | 'exclude', keys?: T[]  | any[] }
@@ -53,7 +55,7 @@ export interface IForm<T> {
 
   resetErrors: () => void;
 
-  setValuesAsInit: () => void;
+  setAsInit: () => void;
 
   reset: (keyParams?: KeyParams<keyof T>) => void;
 
@@ -64,23 +66,12 @@ export interface IForm<T> {
   touch: () => void;
 }
 
-export type FormServiceValuesType = Record<string, FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any>>
+export type FieldVariant = FieldService<any> | CombinedFormFieldService | AutocompleteFieldService<any> | WithFormService
+export type FormServiceValuesType = Record<string, FieldVariant>
 
 export interface IFormable<T extends FormServiceValuesType = FormServiceValuesType> {
   formService: FormService<T>
 }
-
-// export type FormValues<Type extends { fields: Record<string, unknown> }> = {
-//   -readonly [Property in keyof Type['fields']]: RecursiveFormValues<
-//     Type['fields'][Property]
-//   >;
-// };
-
-// export type FormErrors<Type extends { fields: Record<string, unknown> }> = {
-//   -readonly [Property in keyof Type['fields']]: RecursiveFormErrors<
-//     Type['fields'][Property]
-//   >;
-// };
 
 export type ValidationType = 'only-touched' | 'everything';
 

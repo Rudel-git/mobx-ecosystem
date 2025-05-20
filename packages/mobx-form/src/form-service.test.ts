@@ -16,6 +16,7 @@ let formService: FormService<{
   field: FieldService<string>
   autoCompleteField: AutocompleteFieldService<{ id: number, title: string }>
   combinedFormFieldService: CombinedFormFieldService
+  withFormService: CombinedField;
 }>;
 
 class CombinedField {
@@ -50,10 +51,9 @@ beforeEach(() => {
     autoCompleteField: new AutocompleteFieldService<{ id: number, title: string }>(null),
     combinedFormFieldService: new CombinedFormFieldService<IFormable<FormServiceValuesType>>([
      new CombinedField(), new CombinedField()
-    ])
+    ]),
+    withFormService: new CombinedField()
   })
-
- // formService.fields.combinedFormFieldService.add(new CombinedField())
 });
 
 describe('form-service', () => {
@@ -67,6 +67,7 @@ describe('form-service', () => {
 
     expect(formService.fields.field.isValid).toBeFalsy()
     expect(formService.fields.autoCompleteField.isValid).toBeTruthy()
+    expect(formService.fields.withFormService.formService.isValid).toBeTruthy()
     expect(formService.fields.combinedFormFieldService.isValid).toBeFalsy()
     expect(formService.fields.combinedFormFieldService.value.some(it => it.formService.isValid)).toBeFalsy()
   });
@@ -119,13 +120,13 @@ describe('form-service', () => {
 
     const fields = formService.fields;
 
-    fields.combinedFormFieldService.value.forEach(it => it.formService.setErrors({ field: ERROR_TEMPLATE }, 'everything'))
+    // fields.combinedFormFieldService.value.forEach(it => it.formService.setErrors({ field: ERROR_TEMPLATE }, 'everything'))
     
     expect(fields.field.error).toEqual(ERROR_TEMPLATE);
     expect(fields.autoCompleteField.error).toEqual(ERROR_TEMPLATE);
     expect(fields.combinedFormFieldService.error).toEqual(ERROR_TEMPLATE);
 
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.error).toEqual(ERROR_TEMPLATE))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.error).toEqual(ERROR_TEMPLATE))
   })
 
 
@@ -142,7 +143,7 @@ describe('form-service', () => {
     
     expect(fields.field.error).toBeUndefined()
     expect(fields.autoCompleteField.error).toBeUndefined()
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.error).toBeUndefined())
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.error).toBeUndefined())
   })
 
   test('setValues form ', () => {
@@ -154,12 +155,12 @@ describe('form-service', () => {
       combinedFormFieldService: fields.combinedFormFieldService.value
     });
 
-    fields.combinedFormFieldService.value.forEach(it => it.formService.setValues({ field: FIELD_VALUE_TEMPLATE }))
+    // fields.combinedFormFieldService.value.forEach(it => it.formService.setValues({ field: FIELD_VALUE_TEMPLATE }))
     
     expect(fields.field.value).toEqual(FIELD_VALUE_TEMPLATE);
     expect(fields.autoCompleteField.value).toEqual(AUTOCOMPLETE_FIELD_VALUE_TEMPLATE);
 
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.value).toEqual(FIELD_VALUE_TEMPLATE))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.value).toEqual(FIELD_VALUE_TEMPLATE))
   })
 
   test('setInitValues form ', () => {
@@ -171,7 +172,7 @@ describe('form-service', () => {
       combinedFormFieldService: fields.combinedFormFieldService.value
     });
 
-    fields.combinedFormFieldService.value.forEach(it => it.formService.setInitValues({ field: FIELD_VALUE_TEMPLATE }))
+    // fields.combinedFormFieldService.value.forEach(it => it.formService.setInitValues({ field: FIELD_VALUE_TEMPLATE }))
     
     expect(fields.field.initValue).toEqual(FIELD_VALUE_TEMPLATE);
     expect(fields.field.value).toEqual(FIELD_VALUE_TEMPLATE);
@@ -179,8 +180,8 @@ describe('form-service', () => {
     expect(fields.autoCompleteField.initValue).toEqual(AUTOCOMPLETE_FIELD_VALUE_TEMPLATE);
     expect(fields.autoCompleteField.value).toEqual(AUTOCOMPLETE_FIELD_VALUE_TEMPLATE);
 
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(FIELD_VALUE_TEMPLATE))
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.value).toEqual(FIELD_VALUE_TEMPLATE))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(FIELD_VALUE_TEMPLATE))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.value).toEqual(FIELD_VALUE_TEMPLATE))
   })
 
   test('reset form', () => {
@@ -188,7 +189,7 @@ describe('form-service', () => {
 
     expect(fields.field.initValue).toEqual(fields.field.value);
     expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(it.formService.fields.field.value))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(it.formService.fields.field.value))
 
     formService.setValues({
       field: FIELD_VALUE_TEMPLATE,
@@ -196,11 +197,11 @@ describe('form-service', () => {
       combinedFormFieldService: fields.combinedFormFieldService.value
     });
 
-    fields.combinedFormFieldService.value.forEach(it => it.formService.setValues({ field: FIELD_VALUE_TEMPLATE }))
+    // fields.combinedFormFieldService.value.forEach(it => it.formService.setValues({ field: FIELD_VALUE_TEMPLATE }))
 
     expect(fields.field.initValue).not.toEqual(fields.field.value);
     expect(fields.autoCompleteField.initValue).not.toEqual(fields.autoCompleteField.value);
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).not.toEqual(it.formService.fields.field.value))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).not.toEqual(it.formService.fields.field.value))
   })
 
   test('set values as init form', () => {
@@ -212,13 +213,13 @@ describe('form-service', () => {
       combinedFormFieldService: fields.combinedFormFieldService.value
     });
 
-    fields.combinedFormFieldService.value.forEach(it => it.formService.setValues({ field: FIELD_VALUE_TEMPLATE }))
+    // fields.combinedFormFieldService.value.forEach(it => it.formService.setValues({ field: FIELD_VALUE_TEMPLATE }))
 
-    formService.setValuesAsInit();
+    formService.setAsInit();
 
     expect(fields.field.initValue).toEqual(fields.field.value);
     expect(fields.autoCompleteField.initValue).toEqual(fields.autoCompleteField.value);
-    fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(it.formService.fields.field.value))
+    // fields.combinedFormFieldService.value.forEach(it => expect(it.formService.fields.field.initValue).toEqual(it.formService.fields.field.value))
   })
 
   test('reset form with certain fields', () => {

@@ -1,4 +1,4 @@
-import { FormServiceValuesType, FormValues, IField, IFormable, KeyParams, ValidationType } from './types';
+import { FieldOptionsType, FormServiceValuesType, FormValues, IField, IFormable, ValidationType } from './types';
 import { makeAutoObservable } from 'mobx';
 
 export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType> = IFormable<FormServiceValuesType>> implements IField {
@@ -77,7 +77,6 @@ export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType>
     return Boolean(this.value.length);
   }
 
-
   private setTouched = (touched: boolean) => {
     this._touched = touched;
   }
@@ -102,7 +101,7 @@ export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType>
 
   setAsInit = () => {
     this.initValue = this.value;
-    this._value.forEach(it => it.formService.setValuesAsInit());
+    this._value.forEach(it => it.formService.setAsInit());
     this.setTouched(false);
   }
 
@@ -129,5 +128,9 @@ export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType>
 
   enable = () => {
     this.disabled = false;
+  }
+
+  setDisabledFn = (disabledFn: FieldOptionsType<T>['disabledFn']) => {
+    this.value.forEach(it => it.formService.setDisabledFn(disabledFn));
   }
 }

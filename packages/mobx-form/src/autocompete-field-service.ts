@@ -1,6 +1,6 @@
 import { FieldService } from "./field-service";
 import { makeAutoObservable } from "mobx";
-import { AutocompleteFieldOptionsType, IField, KeyParams, ValueType } from "./types";
+import { AutocompleteFieldOptionsType, FieldOptionsType, IField, KeyParams, ValueType } from "./types";
 
 export class AutocompleteFieldService<T = ValueType<unknown>> implements IField {
   field: FieldService<T>;
@@ -70,6 +70,10 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
 
   disable = () => {
     this.field.disabled = true;
+  }
+
+  setDisabledFn = (disabledFn: FieldOptionsType<T>['disabledFn']) => {
+    this.field.setDisabledFn(disabledFn);
   }
 
   enable = () => {

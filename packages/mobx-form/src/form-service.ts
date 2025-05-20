@@ -1,14 +1,17 @@
-import { action, computed, makeAutoObservable, makeObservable, observable } from 'mobx';
+import { isFormService } from "./utils/hasFormService";
+import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, preSubmitValidationError, validate } from './configure-form';
-import { FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ValidationType, ValueType } from './types';
+import { FieldOptionsType, FieldVariant, FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ValidationType, ValueType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 import { AutocompleteFieldService } from './autocompete-field-service';
+import { hasFormService } from './utils';
 
 
 export class FormService<T extends FormServiceValuesType> implements IForm<T> {
-  fields: T;
+  fields: T = {} as T;
+  
   validationSchema?: unknown;
 
   onSubmit?: () => Promise<unknown>;
@@ -56,14 +59,16 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
       }
     })
 
-    // валидация для простейших полей сверху -> вниз
-    const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<T>;
+    if(fieldValues) {
+       // валидация для простейших полей сверху -> вниз
+      const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<T>;
 
-    if(errors && Object.keys(errors || []).length != 0) {
-      this.setErrors(errors, type);
-    }
-    else {
-      this.resetErrors();
+      if(errors && Object.keys(errors || []).length != 0) {
+        this.setErrors(errors, type);
+      }
+      else {
+        this.resetErrors();
+      }
     }
   };
 
@@ -148,7 +153,14 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     const values: Record<string, unknown> = {};
 
     for(const key of this.keys) {
-      values[key] = this.getValue(this.fields[key]);
+      const current = this.fields[key];
+
+      if(hasFormService(current)) {
+        values[key] = current.formService.getValues();
+      }
+      else {
+        values[key] = this.getValue(current);
+      }
     }
 
     return values as FormValues<ValueType<T>>;
@@ -186,13 +198,12 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     this.setValidationToFields();
   };
 
-  private bypassFields = <T>(fields: any, action: (field: FieldService<unknown> | CombinedFormFieldService | AutocompleteFieldService, levelParams?: T) => void, levelParams?: any): unknown | Promise<unknown> => {
+  private bypassFields = (fields: any, action: (field: FieldService<unknown> | CombinedFormFieldService | AutocompleteFieldService | FormService<any>, levelParams?: any) => void, levelParams?: any): unknown | Promise<unknown> => {
     if(fields instanceof FieldService || fields instanceof CombinedFormFieldService || fields instanceof AutocompleteFieldService) {
-      // if(typeof fields.value === 'object') {
-      //   this.bypassFields(fields.value, action, levelParams)
-      // }
-
       return action(fields, levelParams);
+    }
+    else if(hasFormService(fields)) {
+      return action(fields.formService, levelParams);
     }
     else if(typeof fields === 'object') {
       return Promise.all(Object.keys(fields || {}).map(key => {
@@ -221,7 +232,14 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   setInitValues = (values: Partial<FormValues<T>>, { validate }: { validate?: boolean } = {}) => {
     this.bypassFields(
       this.fields, 
-      (field, levelParams) => field.initValue = levelParams, 
+      (field, levelParams) => {
+        if(isFormService(field)) {
+          field.setInitValues(levelParams, { validate })
+        }
+        else {
+          field.initValue = levelParams;
+        }
+      },
       values
     );
 
@@ -236,7 +254,14 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   setValues = (values: Partial<FormValues<T>>, { validate }: MethodOptions = {}) => {
     this.bypassFields(
       this.fields, 
-      (field, levelParams) => field.value = levelParams, 
+      (field, levelParams) => {
+        if(isFormService(field)) {
+          field.setValues(levelParams);
+        }
+        else {
+          field.value = levelParams
+        }
+      },
       values
     );
 
@@ -249,7 +274,14 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
    * Set field errors to undefined
    */
   resetErrors = () => {
-    this.bypassFields(this.fields, (field) => field.error = undefined)
+    this.bypassFields(this.fields, (field) => {
+      if(isFormService(field)) {
+        field.resetErrors();
+      }
+      else {
+        field.error = undefined
+      }
+    })
   }
 
   /**
@@ -259,8 +291,11 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   setErrors(error: Partial<FormErrors<T>>, validationType: ValidationType = 'only-touched') {
     this.bypassFields(
       this.fields, 
-      (field, levelParams?: string) => {
-        if(field.isTouched || validationType === 'everything') { // set error only if it's changed
+      (field, levelParams) => {
+        if(isFormService(field)) {
+          field.setErrors(levelParams, validationType)
+        }
+        else if(field.isTouched || validationType === 'everything') { // set error only if it's changed
           field.error = levelParams
         }
       }, 
@@ -271,57 +306,72 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
    /**
    * Set field values to init values
    */
-   setValuesAsInit = () => {
+   setAsInit = () => {
     this.bypassFields(this.fields, (field) => {
       field.setAsInit();
     })
   };
 
-  private getKeys = ({ keyType = 'include', keys = [] } : KeyParams<keyof T>) => {
+  private getFieldsByKeys = ({ keyType = 'include', keys = [] } : KeyParams<keyof T>) => {
+    let _keys = [];
+
     if(keyType === 'include') {
-      return keys;
+      _keys = keys;
     }
     else {
-      return Object.keys(this.fields).filter(fieldKey => !keys.includes(fieldKey))
+      _keys = Object.keys(this.fields).filter(fieldKey => !keys.includes(fieldKey))
     }
+
+    let fields: Record<string, any> = {};
+    _keys.forEach(key => fields[key] = this.fields?.[key])
+
+    return fields;
   }
+
 
   /**
    * Reset fields to their own initial values
    */
   reset = (keyParams?: KeyParams<keyof T>) => {
-    if(keyParams?.keys) {
-      const _keys = this.getKeys(keyParams);
-     
-      _keys.forEach(key => {
-        const field = this.fields[key] as FieldService<unknown>
-        field.reset();
-      });
-    }
-    else {
-      this.bypassFields(this.fields, (field) => {
-        field.reset()
-      })
-    }
-   
+    const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
+  
+    this.bypassFields(fields, (field) => {
+      field.reset()
+    })
+
     this.validate();
   };
 
   /**
    * Pass true to the property 'disabled'
    */
-  disable = () => {
-    this.bypassFields(this.fields, (field) => field.disable())
+  disable = (keyParams?: KeyParams<keyof T>) => {
+    const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
+
+    this.bypassFields(fields, (field) => field.disable())
   };
 
   /**
    * Pass false to the property 'disabled'
    */
-  enable = () => {
-    this.bypassFields(this.fields, (field) => field.enable())
+  enable = (keyParams?: KeyParams<keyof T>) => {
+    const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
+
+    this.bypassFields(fields, (field) => field.enable())
   };
   
   touch = () => {
     this.bypassFields(this.fields, (field) => field.touch())
+  }
+
+  setDisabledFn = (disabledFn: FieldOptionsType<T>['disabledFn']) => {
+    this.bypassFields(this.fields, (field) => {
+      if(isFormService(field)) {
+        field.setDisabledFn(disabledFn);
+      }
+      else {
+        field.setDisabledFn(disabledFn);
+      }
+    })
   }
 }
