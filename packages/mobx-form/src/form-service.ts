@@ -3,11 +3,10 @@ import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, preSubmitValidationError, validate } from './configure-form';
-import { FieldOptionsType, FieldVariant, FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ValidationType, ValueType } from './types';
+import { FieldOptionsType, FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ValidationType, ValueType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 import { AutocompleteFieldService } from './autocompete-field-service';
 import { hasFormService } from './utils';
-
 
 export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   fields: T = {} as T;
@@ -15,6 +14,9 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   validationSchema?: unknown;
 
   onSubmit?: () => Promise<unknown>;
+
+  
+  onValidate?: (type: ValidationType) => unknown;
 
   constructor(
     fields: T,
@@ -34,6 +36,10 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     this.onSubmit = onSubmit;
   }
 
+  setOnValidate = (onValidate: (type: ValidationType) => unknown) => {
+    this.onValidate = onValidate;
+  }
+
   submit = async () => {
     await this.validate('everything');
 
@@ -49,14 +55,20 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
    * 
    * *Configure this method with configureForm from mobx-form
    */
-  validate = async (type: ValidationType = 'only-touched') => {
+  readonly validate = async (type: ValidationType = 'only-touched') => {
     const fieldValues = this.getValues();
     
     // валидация для сложных форм снизу -> вверх
     await this.bypassFields(this.fields, async (field) => {
+      if(isFormService(field)) {
+        return await field.validate(type)
+      }
+
       if(field instanceof CombinedFormFieldService) {
         return await field.validateFields?.(type);
       }
+
+      return null;
     })
 
     if(fieldValues) {
@@ -64,12 +76,14 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
       const errors = await validate?.(fieldValues, this.validationSchema) as FormErrors<T>;
 
       if(errors && Object.keys(errors || []).length != 0) {
-        this.setErrors(errors, type);
+        this.setValidationError(errors, type);
       }
       else {
-        this.resetErrors();
+        this.resetValidationErrors();
       }
     }
+
+    this.onValidate?.(type);
   };
 
   setValidationSchema = (validationSchema: unknown) => {
@@ -216,22 +230,46 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     this.bypassFields(
       this.fields, 
       (field) => {
-        if(!(field instanceof CombinedFormFieldService)) {
-          field.validate = this.validate
-        }
-        else {
-          field._validate = this.validate;
+        if(!isFormService(field)) {
+          if(field instanceof FieldService || field instanceof AutocompleteFieldService) {
+            field.validate = this.validate
+          }
+          else {
+            field._validate = this.validate;
+          }
         }
       }, 
     );
   }
+
+    private getFieldsByKeys = ({ keyType = 'include', keys = [] } : KeyParams<keyof T>) => {
+    let _keys = [];
+
+    if(keyType === 'include') {
+      _keys = keys;
+    }
+    else {
+      _keys = Object.keys(this.fields).filter(fieldKey => !keys.includes(fieldKey))
+    }
+
+    let fields: Record<string, any> = {};
+    _keys.forEach(key => fields[key] = this.fields?.[key])
+
+    return fields;
+  }
+
   
   /**
   * Set object to init values by form service keys
   */
   setInitValues = (values: Partial<FormValues<T>>, { validate }: { validate?: boolean } = {}) => {
+    const fields = this.getFieldsByKeys({
+      keyType: 'include',
+      keys: Object.keys(values)
+    });
+
     this.bypassFields(
-      this.fields, 
+      fields, 
       (field, levelParams) => {
         if(isFormService(field)) {
           field.setInitValues(levelParams, { validate })
@@ -252,8 +290,13 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   * Set object to values by form service keys
   */
   setValues = (values: Partial<FormValues<T>>, { validate }: MethodOptions = {}) => {
+    const fields = this.getFieldsByKeys({
+      keyType: 'include',
+      keys: Object.keys(values)
+    });
+    
     this.bypassFields(
-      this.fields, 
+      fields, 
       (field, levelParams) => {
         if(isFormService(field)) {
           field.setValues(levelParams);
@@ -270,6 +313,14 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     }
   };
 
+  private resetValidationErrors = () => {
+    this.bypassFields(this.fields, (field) => {
+      if(!isFormService(field)) {
+       field.error = undefined
+      }
+    })
+  }
+
   /**
    * Set field errors to undefined
    */
@@ -284,6 +335,20 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     })
   }
 
+  private setValidationError = (error: Partial<FormErrors<T>>, validationType: ValidationType = 'only-touched',) => {
+      this.bypassFields(
+      this.fields, 
+      (field, levelParams) => {
+        if(field.isTouched || validationType === 'everything') { // set error only if it's changed
+           if(!isFormService(field)) {
+              field.error = levelParams
+            }
+        }
+      }, 
+      error
+    );
+  }
+
   /**
    * Set errors for fields
    * @param errors object of string which provides errors for fields
@@ -292,11 +357,15 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     this.bypassFields(
       this.fields, 
       (field, levelParams) => {
-        if(isFormService(field)) {
-          field.setErrors(levelParams, validationType)
-        }
-        else if(field.isTouched || validationType === 'everything') { // set error only if it's changed
-          field.error = levelParams
+        if(field.isTouched || validationType === 'everything') { // set error only if it's changed
+           if(isFormService(field)) {
+              if(levelParams) {
+                field.setErrors(levelParams, validationType)
+              }
+            }
+            else {
+              field.error = levelParams
+            }
         }
       }, 
       error
@@ -312,23 +381,6 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     })
   };
 
-  private getFieldsByKeys = ({ keyType = 'include', keys = [] } : KeyParams<keyof T>) => {
-    let _keys = [];
-
-    if(keyType === 'include') {
-      _keys = keys;
-    }
-    else {
-      _keys = Object.keys(this.fields).filter(fieldKey => !keys.includes(fieldKey))
-    }
-
-    let fields: Record<string, any> = {};
-    _keys.forEach(key => fields[key] = this.fields?.[key])
-
-    return fields;
-  }
-
-
   /**
    * Reset fields to their own initial values
    */
@@ -337,6 +389,20 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   
     this.bypassFields(fields, (field) => {
       field.reset()
+    })
+
+   
+    this.validate();
+  };
+
+    /**
+   * Clear fields to their first/constructor initial values
+   */
+  clear = (keyParams?: KeyParams<keyof T>) => {
+    const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
+  
+    this.bypassFields(fields, (field) => {
+      field.clear()
     })
 
     this.validate();

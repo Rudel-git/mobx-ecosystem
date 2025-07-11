@@ -5,7 +5,18 @@ import { AutocompleteFieldService } from "./autocompete-field-service";
 
 export type WithFormService = { formService: FormService<any> }
 
-export type ValueType<T> = T | null | undefined;
+export type EmptyType<T> = never;
+  // T extends []? [] :
+  // T extends boolean? null :
+  // T extends string? '' :
+  // T extends number? 0 :
+  // T extends object? null :
+  // never;
+
+export type ValueType<T> = 
+  T extends object ? T | null :
+  T extends boolean ? boolean | null :
+  T;
 
 export type FormValues<Type> = Type extends IField
   ? Type['value']
@@ -30,6 +41,7 @@ export interface IField {
 
   validate?: () => Promise<unknown>;
   reset() : void;
+  clear() : void;
   setAsInit(): void;
   touch(): void;
   disable: () => void;

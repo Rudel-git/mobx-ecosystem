@@ -1,20 +1,19 @@
 import { FieldService } from "./field-service";
 import { makeAutoObservable } from "mobx";
-import { AutocompleteFieldOptionsType, FieldOptionsType, IField, KeyParams, ValueType } from "./types";
+import { AutocompleteFieldOptionsType, FieldOptionsType, IField, ValueType } from "./types";
 
-export class AutocompleteFieldService<T = ValueType<unknown>> implements IField {
+export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = ValueType<object | unknown[]>> implements IField {
   field: FieldService<T>;
-  inputField = new FieldService<string>("");
+  inputField = new FieldService('');
 
   options?: AutocompleteFieldOptionsType<T>;
   
-  constructor(initValue?: ValueType<T>, options?: AutocompleteFieldOptionsType<T>) {
+  constructor(initValue: ValueType<T>, options?: AutocompleteFieldOptionsType<T>) {
     makeAutoObservable(this);
 
     this.options = options;
 
-    this.field = new FieldService<T>(null, { onChange: options?.onChange, beforeOnChange: options?.beforeOnChange });
-    this.field.initValue = initValue;
+    this.field = new FieldService<T>(initValue, { onChange: options?.onChange, beforeOnChange: options?.beforeOnChange });
   }
 
   get validate() {
@@ -46,6 +45,11 @@ export class AutocompleteFieldService<T = ValueType<unknown>> implements IField 
   reset = () => {
     this.field.reset();
   }
+
+  clear = () => {
+    this.field.clear();
+  }
+
   setAsInit = () => {
     this.field.setAsInit();
   }

@@ -1,4 +1,5 @@
-import { FormService } from "form-service";
+
+import { FormService } from "../form-service";
 import { WithFormService } from "../types";
 
 export const hasFormService = (obj: any): obj is WithFormService => {

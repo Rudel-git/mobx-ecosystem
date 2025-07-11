@@ -1,6 +1,6 @@
 import { makeAutoObservable } from 'mobx';
-import { FieldOptionsType, IField, MethodOptions, ValueType } from './types';
-import { isEqual, isObject } from './utils';
+import { EmptyType, FieldOptionsType, IField, MethodOptions, ValueType } from './types';
+import { isBoolean, isEqual, isNumber, isObject, isString } from './utils';
 
 type FieldProps<T> = {
   value: T,
@@ -9,21 +9,46 @@ type FieldProps<T> = {
   error?: string;
   disabled?: boolean;
 }
-export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = FieldProps<T>> implements IField {
+
+const getEmptyValueType = <T,>(value: unknown): EmptyType<T> => {
+  if (isString(value)) {
+    return '' as EmptyType<T>;
+  }
+  else if (isNumber(value)) {
+    return 0 as EmptyType<T>;
+  }
+  else if(isBoolean(value)) {
+    return false as EmptyType<T>
+  }
+  else if(Array.isArray(value)) {
+    return [] as EmptyType<T>;
+  }
+  else if(value === null || isObject(value) || isBoolean(value)) {
+    return null as EmptyType<T>;
+  }
+
+  return undefined as unknown  as EmptyType<T>;
+}
+
+export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements IField {
+  private _emptyValueType: EmptyType<T>;
+
   validate?: () => Promise<unknown>;
   _serviceType = 'field-service';
-  private _initValue?: ValueType<T> = undefined;
-  private _value?: ValueType<T> = undefined;
+  private _initValue!: ValueType<T>;
+  private _value!: ValueType<T>;
   private _error?: string = undefined;
   private _disabled = false;
   private _isBlurred = false;
 
   options: FieldOptionsType<T> = {};
 
-  constructor(initValue?: ValueType<T>, options?: FieldOptionsType<T>) {
+  constructor(initValue: ValueType<T>, options?: FieldOptionsType<T>) {
     makeAutoObservable(this);
 
+    this._emptyValueType = getEmptyValueType(initValue);
     this.initValue = initValue;
+
     this.options = options || {};
   }
 
@@ -32,8 +57,14 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
   }
 
   set initValue(initValue: ValueType<T>) {
-    this._initValue = initValue || this._initValue;
-    this._value = initValue;
+    if(initValue || initValue === this._emptyValueType){
+      this._initValue = initValue;
+    }
+    else {
+      this._initValue = this._emptyValueType;
+    }
+
+    this._value = this._initValue;
     this.validate?.();
   }
 
@@ -124,6 +155,11 @@ export class FieldService<T = ValueType<unknown>, P extends FieldProps<T> = Fiel
   reset = () => {
     this.value = this.initValue;
     this.isBlurred = false;
+  }
+
+  clear = () => {
+    this.value = this._emptyValueType;
+    this.isBlurred = true;
   }
 
   setAsInit = () => {

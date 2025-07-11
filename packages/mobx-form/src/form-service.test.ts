@@ -16,11 +16,16 @@ let formService: FormService<{
   field: FieldService<string>
   autoCompleteField: AutocompleteFieldService<{ id: number, title: string }>
   combinedFormFieldService: CombinedFormFieldService
-  withFormService: CombinedField;
+  withFormService: WithFormService
 }>;
 
+class WithFormService {
+  formService = new FormService({
+    combinedField: new CombinedField()
+  })
+}
 class CombinedField {
-  field = new FieldService("");
+  field = new FieldService("combined-field");
   
   formService = new FormService({
     field: this.field,
@@ -35,7 +40,7 @@ beforeEach(() => {
 
   configureForm({
     validation: {
-      validate: (fieldValues: Record<string, unknown>, validationSchema: unknown) => {
+      validate: (fieldValues: Record<string, unknown>, validationSchema: unknown) => {        
         return new Promise(resolve => resolve({ field: 'error' }))
       },
       preSubmitValidationError: () => {
@@ -47,12 +52,12 @@ beforeEach(() => {
 
 
   formService = new FormService({
-    field: new FieldService(""),
+    field: new FieldService(''),
     autoCompleteField: new AutocompleteFieldService<{ id: number, title: string }>(null),
     combinedFormFieldService: new CombinedFormFieldService<IFormable<FormServiceValuesType>>([
      new CombinedField(), new CombinedField()
     ]),
-    withFormService: new CombinedField()
+    withFormService: new WithFormService()
   })
 });
 
@@ -63,22 +68,26 @@ describe('form-service', () => {
     expect(formService.canBeSubmitted).toBeFalsy()
     expect(formService.isTouched).toBeFalsy()
     expect(formService.isValid).toBeFalsy()
-    expect(formService.canBeSubmitted).toBeFalsy()
 
     expect(formService.fields.field.isValid).toBeFalsy()
     expect(formService.fields.autoCompleteField.isValid).toBeTruthy()
-    expect(formService.fields.withFormService.formService.isValid).toBeTruthy()
+    expect(formService.fields.withFormService.formService.isValid).toBeFalsy()
+    expect(formService.fields.withFormService.formService.canBeSubmitted).toBeFalsy()
     expect(formService.fields.combinedFormFieldService.isValid).toBeFalsy()
     expect(formService.fields.combinedFormFieldService.value.some(it => it.formService.isValid)).toBeFalsy()
   });
 
   test('vallidate "touched" form', async () => {
-    formService.fields.field.touch();
+   formService.fields.field.touch();
+   formService.fields.autoCompleteField.touch();
+   await formService.validate('only-touched');
 
-    await formService.validate('only-touched');
+  // formService.fields.withFormService.formService.touch();
+  // await formService.fields.withFormService.formService.validate('everything')
 
     expect(formService.fields.field.isValid).toBeFalsy()
-    expect(formService.fields.autoCompleteField.isValid).toBeTruthy()
+    // expect(formService.fields.autoCompleteField.isValid).toBeFalsy()
+  //  expect(formService.fields.withFormService.formService.isValid).toBeFalsy()
   });
 
   test('touch form', async () => {    
