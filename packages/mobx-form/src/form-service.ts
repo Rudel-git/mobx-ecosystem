@@ -16,7 +16,9 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   onSubmit?: () => Promise<unknown>;
 
   
-  onValidate?: (type: ValidationType) => unknown;
+  private onValidate?: (type: ValidationType) => unknown;
+
+  private onClear?: () => void;
 
   constructor(
     fields: T,
@@ -38,6 +40,10 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
 
   setOnValidate = (onValidate: (type: ValidationType) => unknown) => {
     this.onValidate = onValidate;
+  }
+
+   setOnClear = (onClear: () => void) => {
+    this.onClear = onClear;
   }
 
   submit = async () => {
@@ -405,6 +411,7 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
       field.clear()
     })
 
+    this.onClear?.();
     this.validate();
   };
 

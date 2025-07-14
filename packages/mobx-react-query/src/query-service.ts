@@ -7,7 +7,7 @@ export class QueryService {
   unsubscribe?: () => void;
 
   queryClient = queryClient;
-  observer?: QueryObserver = new QueryObserver(queryClient, {});
+  observer?: QueryObserver;
   private queryParams?: QueryObserverOptions<unknown, unknown, unknown, unknown, QueryKey>;
   queryResult?: QueryObserverResult;
 
@@ -39,6 +39,11 @@ export class QueryService {
     this.isQueryFullLoading = settings?.initWithLoading || true;
   }
 
+  private createNewObserver = () => {
+    this.destroyObserver();
+    this.observer = new QueryObserver(queryClient, {})
+  }
+
   /** Аналог useQuery */
   fetch = async <
     TQueryFnData = unknown,
@@ -55,6 +60,8 @@ export class QueryService {
     >,
     options: Partial<AsyncServiceMethodOptions> = DEFAULT_METHOD_OPTIONS,
   ) => {
+    this.createNewObserver();
+
     this.isQueryLoading = false;
     this.isQueryFullLoading = true;
 
@@ -106,16 +113,19 @@ export class QueryService {
     });
   };
 
+  private destroyObserver = () => {
+    this.unsubscribe?.();
+    this.observer?.destroy();
+    this.observer = undefined;
+    this.unsubscribe = undefined;
+  }
+
   dispose = () => {
     if(this.observer) {
-      // this.observer.remove();
-      this.unsubscribe?.();
-      this.observer.destroy();
-      this.observer = undefined;
+      this.destroyObserver();
 
       this.queryResult = undefined;
       this.queryParams = undefined;
-      this.unsubscribe = undefined;
     }
   }
 }
