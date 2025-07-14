@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { EmptyType, FieldOptionsType, IField, MethodOptions, ValueType } from './types';
+import { EmptyType, FieldOptionsType, IField, MethodOptions, ResetType, ValueType } from './types';
 import { isBoolean, isEqual, isNumber, isObject, isString } from './utils';
 
 type FieldProps<T> = {
@@ -134,6 +134,14 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
     this.options = options;
   }
 
+  setInitValue = (initValue: ValueType<T>, { validate }: MethodOptions = {}) => {
+    this.initValue = initValue;
+
+    if(validate) {
+      this.validate?.();
+    }
+  }
+
   setValue = (value: ValueType<T>, { validate }: MethodOptions = {}) => {
     this.value = value;
 
@@ -152,8 +160,10 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
     this.validate?.();
   }
 
-  reset = () => {
-    this.value = this.initValue;
+  reset = (params?: ResetType) => {
+    const { to = 'initValue' } = params || {};
+
+    this.value = to === 'initValue'? this.initValue : this._emptyValueType;
     this.isBlurred = false;
   }
 

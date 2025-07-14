@@ -1,6 +1,6 @@
 import { FieldService } from "./field-service";
 import { makeAutoObservable } from "mobx";
-import { AutocompleteFieldOptionsType, FieldOptionsType, IField, ValueType } from "./types";
+import { AutocompleteFieldOptionsType, FieldOptionsType, IField, MethodOptions, ValueType } from "./types";
 
 export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = ValueType<object | unknown[]>> implements IField {
   field: FieldService<T>;
@@ -82,6 +82,14 @@ export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = 
 
   enable = () => {
     this.field.disabled = false;
+  }
+
+  setInitValue = (initValue: ValueType<T>, { validate }: MethodOptions = {}) => {
+    this.field.setInitValue(initValue, { validate });
+
+    if(validate) {
+      this.validate?.();
+    }
   }
 
   get value() {

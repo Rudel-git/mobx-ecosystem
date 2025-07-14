@@ -3,7 +3,7 @@ import { makeAutoObservable } from 'mobx';
 
 import { FieldService } from './field-service';
 import { _checkConfiguration, preSubmitValidationError, validate } from './configure-form';
-import { FieldOptionsType, FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ValidationType, ValueType } from './types';
+import { FieldOptionsType, FormErrors, FormServiceValuesType, FormValues, IForm, KeyParams, MethodOptions, ResetType, ValidationType, ValueType } from './types';
 import { CombinedFormFieldService } from './combined-form-field-service';
 import { AutocompleteFieldService } from './autocompete-field-service';
 import { hasFormService } from './utils';
@@ -19,6 +19,8 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   private onValidate?: (type: ValidationType) => unknown;
 
   private onClear?: () => void;
+
+  private onReset?: (params?: ResetType) => void;
 
   constructor(
     fields: T,
@@ -42,8 +44,12 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     this.onValidate = onValidate;
   }
 
-   setOnClear = (onClear: () => void) => {
+  setOnClear = (onClear: () => void) => {
     this.onClear = onClear;
+  }
+
+  setOnReset = (onReset: (params?: ResetType) => void) => {
+    this.onReset = onReset;
   }
 
   submit = async () => {
@@ -281,7 +287,7 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
           field.setInitValues(levelParams, { validate })
         }
         else {
-          field.initValue = levelParams;
+          field.setInitValue(levelParams, { validate })
         }
       },
       values
@@ -390,13 +396,15 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
    * Reset fields to their own initial values
    */
-  reset = (keyParams?: KeyParams<keyof T>) => {
+  reset = (params?: KeyParams<keyof T> & ResetType) => {
+    const { to, ...keyParams }  = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
   
     this.bypassFields(fields, (field) => {
-      field.reset()
+      field.reset({ to })
     })
 
+    this.onReset?.({ to });
    
     this.validate();
   };
@@ -404,15 +412,19 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
     /**
    * Clear fields to their first/constructor initial values
    */
-  clear = (keyParams?: KeyParams<keyof T>) => {
+  clear = (params?: KeyParams<keyof T> & MethodOptions) => {
+    const { validate = true, ...keyParams } = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
   
     this.bypassFields(fields, (field) => {
-      field.clear()
+      field.clear({ validate })
     })
 
     this.onClear?.();
-    this.validate();
+
+    if(validate) {
+      this.validate();
+    }
   };
 
   /**

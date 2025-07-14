@@ -1,4 +1,4 @@
-import { FieldOptionsType, FormServiceValuesType, FormValues, IField, IFormable, ValidationType } from './types';
+import { FieldOptionsType, FormServiceValuesType, FormValues, IField, IFormable, MethodOptions, ValidationType, ValueType } from './types';
 import { makeAutoObservable } from 'mobx';
 
 export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType> = IFormable<FormServiceValuesType>> implements IField {
@@ -99,9 +99,9 @@ export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType>
     this.setTouched(false);
   }
 
-  clear = () => {
+  clear = ({ validate = true }: MethodOptions) => {
     this._value = this.initValue.slice(0); // copy array without objects
-    this._value.forEach(it => it.formService.clear());
+    this._value.forEach(it => it.formService.clear({ validate }));
     this.setTouched(false);
   }
 
@@ -138,5 +138,16 @@ export class CombinedFormFieldService<T extends IFormable<FormServiceValuesType>
 
   setDisabledFn = (disabledFn: FieldOptionsType<T>['disabledFn']) => {
     this.value.forEach(it => it.formService.setDisabledFn(disabledFn));
+  }
+
+  setInitValue = (_initValue: T[], { validate }: MethodOptions = {}) => {
+    this._initValue = _initValue;
+    this._value = _initValue.slice(0); // copy array without objects
+
+    this.setTouched(false);
+
+    if(validate) {
+      this.validate?.('only-touched');
+    }
   }
 }

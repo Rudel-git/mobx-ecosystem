@@ -41,7 +41,7 @@ export interface IField {
 
   validate?: () => Promise<unknown>;
   reset() : void;
-  clear() : void;
+  clear(options: MethodOptions) : void;
   setAsInit(): void;
   touch(): void;
   disable: () => void;
@@ -99,3 +99,5 @@ export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
 }
 
 export type MethodOptions = { validate?: boolean }
+
+export type ResetType = { to?: 'initValue' | 'empty' }
