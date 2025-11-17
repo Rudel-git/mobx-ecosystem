@@ -32,8 +32,6 @@ const getEmptyValueType = <T,>(value: unknown): EmptyType<T> => {
 }
 
 export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements IField {
-  lock = false;
-
   eventBus?: Emitter<FieldEvents<T>>;
   
   private _emptyValueType: EmptyType<T>;
@@ -195,7 +193,7 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
     this.disabled = true;
   }
 
-  enable = ({ lock }) => {
+  enable = () => {
     this.disabled = false;
   }
 

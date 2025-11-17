@@ -430,11 +430,10 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
 
   /**
    * Pass true to the property 'disabled'
-   * lock - prevent from disabling / enabling fields from other form services.
    * Useful for editing / readonly mode when the fields has their own business logic
    */
-  disable = (params?: KeyParams<keyof T> & { lock?: boolean}) => {
-    const { lock, ...keyParams } = params || {};
+  disable = (params?: KeyParams<keyof T>) => {
+    const { ...keyParams } = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
 
     this.bypassFields(fields, (field) => field.disable())
@@ -443,11 +442,11 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
    * Pass false to the property 'disabled'
    */
-  enable = (params?: KeyParams<keyof T> & { lock?: boolean}) => {
-    const { lock, ...keyParams } = params || {};
+  enable = (params?: KeyParams<keyof T> ) => {
+    const { ...keyParams } = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
 
-    this.bypassFields(fields, (field) => field.enable({ lock }))
+    this.bypassFields(fields, (field) => field.enable())
   };
   
   touch = () => {

@@ -44,8 +44,8 @@ export interface IField {
   clear(options: MethodOptions) : void;
   setAsInit(): void;
   touch(): void;
-  disable: ({ lock }) => void;
-  enable: ({ lock }) => void;
+  disable: () => void;
+  enable: () => void;
 }
 
 export interface IForm<T> {
