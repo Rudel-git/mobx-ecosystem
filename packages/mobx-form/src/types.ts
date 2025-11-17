@@ -44,8 +44,8 @@ export interface IField {
   clear(options: MethodOptions) : void;
   setAsInit(): void;
   touch(): void;
-  disable: () => void;
-  enable: () => void;
+  disable: ({ lock }) => void;
+  enable: ({ lock }) => void;
 }
 
 export interface IForm<T> {
@@ -91,7 +91,11 @@ export type ValidationType = 'only-touched' | 'everything';
 type OnChangeHandler<T> = (value: ValueType<T>) => void;
 type BeforeChangeHandler<T> = (value: ValueType<T>) => void | 'abort';
 
-export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeOnChange?: BeforeChangeHandler<T>, disabledFn?: () => boolean; };
+export type FieldEvents<T> = {
+  ON_CHANGE: ValueType<T>;
+}
+
+export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeOnChange?: BeforeChangeHandler<T>, disabledFn?: () => boolean; hasEventBus?: boolean};
 
 export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
   onInputChange?: OnChangeHandler<string>,

@@ -1,6 +1,7 @@
 import { makeAutoObservable } from 'mobx';
-import { EmptyType, FieldOptionsType, IField, MethodOptions, ResetType, ValueType } from './types';
+import { EmptyType, FieldEvents, FieldOptionsType, IField, MethodOptions, ResetType, ValueType } from './types';
 import { isBoolean, isEqual, isNumber, isObject, isString } from './utils';
+import mitt, { Emitter } from 'mitt';
 
 type FieldProps<T> = {
   value: T,
@@ -31,6 +32,10 @@ const getEmptyValueType = <T,>(value: unknown): EmptyType<T> => {
 }
 
 export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements IField {
+  lock = false;
+
+  eventBus?: Emitter<FieldEvents<T>>;
+  
   private _emptyValueType: EmptyType<T>;
 
   validate?: () => Promise<unknown>;
@@ -50,6 +55,10 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
     this.initValue = initValue;
 
     this.options = options || {};
+
+    if(this.options?.hasEventBus) {
+      this.eventBus = mitt<FieldEvents<T>>();
+    }
   }
 
   get initValue() {
@@ -82,7 +91,8 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
     this._value = value;
 
     if(oldValue !== value) {
-      this.options?.onChange?.(value)
+      this.options?.onChange?.(value);
+      this.eventBus?.emit("ON_CHANGE", value);
     }
   }
 
@@ -185,7 +195,7 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
     this.disabled = true;
   }
 
-  enable = () => {
+  enable = ({ lock }) => {
     this.disabled = false;
   }
 
@@ -212,4 +222,12 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
       onBlur: this.onBlur,
     };
   }
+
+  dispose = () => {
+    if(this.options?.hasEventBus) {
+      this.eventBus?.all.clear();
+      this.eventBus = undefined;
+    }
+  }
 }
+

@@ -7,7 +7,6 @@ import { FieldOptionsType, FormErrors, FormServiceValuesType, FormValues, IForm,
 import { CombinedFormFieldService } from './combined-form-field-service';
 import { AutocompleteFieldService } from './autocompete-field-service';
 import { hasFormService } from './utils';
-
 export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   fields: T = {} as T;
   
@@ -396,8 +395,8 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
    * Reset fields to their own initial values
    */
-  reset = (params?: KeyParams<keyof T> & ResetType) => {
-    const { to, ...keyParams }  = params || {};
+  reset = (params?: KeyParams<keyof T> & ResetType & MethodOptions) => {
+    const { to, validate = true, ...keyParams }  = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
   
     this.bypassFields(fields, (field) => {
@@ -406,7 +405,9 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
 
     this.onReset?.({ to });
    
-    this.validate();
+    if(validate) {
+      this.validate();
+    }
   };
 
     /**
@@ -429,8 +430,11 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
 
   /**
    * Pass true to the property 'disabled'
+   * lock - prevent from disabling / enabling fields from other form services.
+   * Useful for editing / readonly mode when the fields has their own business logic
    */
-  disable = (keyParams?: KeyParams<keyof T>) => {
+  disable = (params?: KeyParams<keyof T> & { lock?: boolean}) => {
+    const { lock, ...keyParams } = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
 
     this.bypassFields(fields, (field) => field.disable())
@@ -439,10 +443,11 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
   /**
    * Pass false to the property 'disabled'
    */
-  enable = (keyParams?: KeyParams<keyof T>) => {
+  enable = (params?: KeyParams<keyof T> & { lock?: boolean}) => {
+    const { lock, ...keyParams } = params || {};
     const fields = keyParams?.keys? this.getFieldsByKeys(keyParams) : this.fields;
 
-    this.bypassFields(fields, (field) => field.enable())
+    this.bypassFields(fields, (field) => field.enable({ lock }))
   };
   
   touch = () => {
