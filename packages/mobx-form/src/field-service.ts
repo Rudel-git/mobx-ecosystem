@@ -32,7 +32,7 @@ const getEmptyValueType = <T,>(value: unknown): EmptyType<T> => {
 }
 
 export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements IField {
-  eventBus?: Emitter<FieldEvents<T>>;
+  events?: Emitter<FieldEvents<T>>;
   
   private _emptyValueType: EmptyType<T>;
 
@@ -54,8 +54,14 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
 
     this.options = options || {};
 
-    if(this.options?.hasEventBus) {
-      this.eventBus = mitt<FieldEvents<T>>();
+    if(this.options?.hasEvents) {
+      this.events = mitt<FieldEvents<T>>();
+    }
+  }
+
+  private emit = (key: keyof FieldEvents<T>, value: any) => {
+    if(this.options?.hasEvents && this.events) {
+      this.events.emit(key, value);
     }
   }
 
@@ -90,7 +96,8 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
 
     if(oldValue !== value) {
       this.options?.onChange?.(value);
-      this.eventBus?.emit("ON_CHANGE", value);
+
+      this.emit("ON_CHANGE", value);
     }
   }
 
@@ -222,9 +229,9 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
   }
 
   dispose = () => {
-    if(this.options?.hasEventBus) {
-      this.eventBus?.all.clear();
-      this.eventBus = undefined;
+    if(this.events) {
+      this.events?.all.clear();
+      this.events = undefined;
     }
   }
 }

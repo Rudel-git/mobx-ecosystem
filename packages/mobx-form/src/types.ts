@@ -95,11 +95,14 @@ export type FieldEvents<T> = {
   ON_CHANGE: ValueType<T>;
 }
 
-export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeOnChange?: BeforeChangeHandler<T>, disabledFn?: () => boolean; hasEventBus?: boolean};
+export type FieldOptionsType<T> = { onError?: boolean, onChange?: OnChangeHandler<T>; beforeOnChange?: BeforeChangeHandler<T>, disabledFn?: () => boolean; hasEvents?: boolean };
 
 export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
   onInputChange?: OnChangeHandler<string>,
   onInputBeforeChange?: BeforeChangeHandler<string>
+  onFocus?: () => void;
+  loadingFn?: () => boolean| undefined;
+  optionsFn?: () => T[];
 }
 
 export type MethodOptions = { validate?: boolean }

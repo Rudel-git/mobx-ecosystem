@@ -16,6 +16,10 @@ export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = 
     this.field = new FieldService<T>(initValue, { onChange: options?.onChange, beforeOnChange: options?.beforeOnChange });
   }
 
+  get events() {
+    return this.field.events;
+  }
+
   get validate() {
     return this.field.validate;
   }
@@ -66,6 +70,10 @@ export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = 
     if(oldValue !== value) {
       this.options?.onInputChange?.(value)
     }
+  }
+
+  private onFocus = () => {
+    this.options?.onFocus?.()
   }
 
   touch = () => {
@@ -139,8 +147,14 @@ export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = 
   get props() {
     return {
       ...this.field.props,
-      // inputValue: this.inputField.value,
-      onSearchChange: this.onInputChange
+      onSearchChange: this.onInputChange,
+      onFocus: this.onFocus,
+      loading: this.options?.loadingFn? this.options?.loadingFn() : false,
+      options: this.options?.optionsFn? this.options?.optionsFn() : [],
     };
+  }
+
+  dispose = () => {
+    this.field.dispose();
   }
 }
