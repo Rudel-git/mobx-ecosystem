@@ -13,7 +13,7 @@ export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = 
 
     this.options = options;
 
-    this.field = new FieldService<T>(initValue, { onChange: options?.onChange, beforeOnChange: options?.beforeOnChange, hasEvents: options?.hasEvents });
+    this.field = new FieldService<T>(initValue, { onChange: options?.onChange, beforeOnChange: options?.beforeOnChange, hasEvents: options?.hasEvents, disabledFn: options?.disabledFn });
   }
 
   get events() {
