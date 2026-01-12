@@ -145,12 +145,15 @@ export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = 
   }
 
   get props() {
+    const optionsFn = this.options?.optionsFn?.();
+    const loadingFn = this.options?.loadingFn?.();
+
     return {
       ...this.field.props,
       onSearchChange: this.onInputChange,
       onFocus: this.onFocus,
-      loading: this.options?.loadingFn? this.options?.loadingFn() : false,
-      options: this.options?.optionsFn? this.options?.optionsFn() : [],
+      ...(loadingFn !== undefined && { loading: this.options?.loadingFn?.() || false}),
+      ...(optionsFn !== undefined && { options: this.options?.optionsFn?.() || []})
     };
   }
 
