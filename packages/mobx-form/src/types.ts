@@ -102,7 +102,7 @@ export type AutocompleteFieldOptionsType<T> = FieldOptionsType<T> & {
   onInputBeforeChange?: BeforeChangeHandler<string>
   onFocus?: () => void;
   loadingFn?: () => boolean| undefined;
-  optionsFn?: () => T[];
+  optionsFn?: () => T;
 }
 
 export type MethodOptions = { validate?: boolean }

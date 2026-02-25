@@ -178,7 +178,7 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
   reset = (params?: ResetType) => {
     const { to = 'initValue' } = params || {};
 
-    this.value = to === 'initValue'? this.initValue : this._emptyValueType;
+    this._value = to === 'initValue'? this.initValue : this._emptyValueType;
     this.isBlurred = false;
   }
 
