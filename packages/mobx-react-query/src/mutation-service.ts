@@ -75,6 +75,8 @@ export class MutationService {
           runInAction(() => {
             this.isMutationFullLoading = false;
           })
+
+          options?.rejectable && reject(error)
         },
       } as MutationObserverOptions;
 
@@ -93,7 +95,7 @@ export class MutationService {
         });
       });
 
-      this.observer?.mutate().catch(error => options?.rejectable && reject(error));
+      this.observer?.mutate();
     });
   };
 }
