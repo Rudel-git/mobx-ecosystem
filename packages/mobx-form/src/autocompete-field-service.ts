@@ -2,13 +2,13 @@ import { FieldService } from "./field-service";
 import { makeAutoObservable } from "mobx";
 import { AutocompleteFieldOptionsType, FieldOptionsType, IField, MethodOptions, ValueType } from "./types";
 
-export class AutocompleteFieldService<T extends ValueType<object | unknown[]> = ValueType<object | unknown[]>> implements IField {
+export class AutocompleteFieldService<V = object, M = false, T = M extends true? ValueType<V[]> : ValueType<V>> implements IField {
   field: FieldService<T>;
   inputField = new FieldService('');
 
-  options?: AutocompleteFieldOptionsType<T>;
+  options?: AutocompleteFieldOptionsType<V, T>;
   
-  constructor(initValue: ValueType<T>, options?: AutocompleteFieldOptionsType<T>) {
+  constructor(initValue: ValueType<T>, options?: AutocompleteFieldOptionsType<V, T>) {
     makeAutoObservable(this);
 
     this.options = options;
