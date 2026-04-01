@@ -147,11 +147,13 @@ export class AutocompleteFieldService<V = object, M = false, T = M extends true?
   get props() {
     const optionsFn = this.options?.optionsFn?.();
     const loadingFn = this.options?.loadingFn?.();
+    const onInputBeforeChange = this.options?.onInputBeforeChange;
+    const onInputChange = this.options?.onInputChange
 
     return {
       ...this.field.props,
-      onSearchChange: this.onInputChange,
       onFocus: this.onFocus,
+       ...((onInputBeforeChange !== undefined || onInputChange !== undefined) && { onSearchChange: this.onInputChange || undefined}),
       ...(loadingFn !== undefined && { loading: this.options?.loadingFn?.() || false}),
       ...(optionsFn !== undefined && { options: this.options?.optionsFn?.() || []})
     };
