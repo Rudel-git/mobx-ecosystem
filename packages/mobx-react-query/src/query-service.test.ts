@@ -1,0 +1,79 @@
+import { describe, expect, it, jest } from "@jest/globals";
+import { QueryClient } from "@tanstack/react-query";
+import { configureMobxReactQuery } from "./config";
+import { QueryService } from "./query-service";
+
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+const setupClient = (staleTime: number) => {
+  configureMobxReactQuery({
+    queryClient: new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime } },
+    }),
+  });
+};
+
+describe("QueryService", () => {
+  describe("fetch", () => {
+    it("без кэша -> onSuccess вызывается один раз", async () => {
+      setupClient(0);
+
+      const onSuccess = jest.fn<(data: unknown) => void>();
+      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("first");
+
+      await new QueryService().fetch({ queryKey: ["k"], queryFn, onSuccess });
+      await flush();
+
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+    });
+
+    it("кэш есть, но данные протухли -> onSuccess один раз, и с новыми данными", async () => {
+      setupClient(0);
+
+      const queryFn = jest
+        .fn<() => Promise<string>>()
+        .mockResolvedValueOnce("stale")
+        .mockResolvedValueOnce("fresh");
+
+      await new QueryService().fetch({ queryKey: ["k"], queryFn });
+
+      const onSuccess = jest.fn<(data: unknown) => void>();
+
+      await new QueryService().fetch({ queryKey: ["k"], queryFn, onSuccess });
+      await flush();
+
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+      expect(onSuccess).toHaveBeenCalledWith("fresh");
+    });
+
+    it("данные свежие -> запрос не повторяется, onSuccess один раз", async () => {
+      setupClient(60_000);
+
+      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("cached");
+
+      await new QueryService().fetch({ queryKey: ["k"], queryFn });
+
+      const onSuccess = jest.fn<(data: unknown) => void>();
+
+      await new QueryService().fetch({ queryKey: ["k"], queryFn, onSuccess });
+      await flush();
+
+      expect(queryFn).toHaveBeenCalledTimes(1);
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+      expect(onSuccess).toHaveBeenCalledWith("cached");
+    });
+
+    it("ошибка при rejectable: false -> промис завершается, а не виснет", async () => {
+      setupClient(0);
+
+      const queryFn = jest.fn<() => Promise<string>>().mockRejectedValue(new Error("boom"));
+
+      const result = await new QueryService().fetch(
+        { queryKey: ["err"], queryFn },
+        { hasToast: false, rejectable: false },
+      );
+
+      expect(result).toBeUndefined();
+    });
+  });
+});

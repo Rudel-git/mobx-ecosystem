@@ -1,5 +1,5 @@
 import { MutationObserver, MutationObserverOptions, MutationObserverResult } from "@tanstack/react-query";
-import { DEFAULT_METHOD_OPTIONS, onMutationError, queryClient } from "config";
+import { DEFAULT_METHOD_OPTIONS, onMutationError, queryClient } from "./config";
 import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
 

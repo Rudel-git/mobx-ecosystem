@@ -1,5 +1,5 @@
 import { QueryKey, QueryObserver, QueryObserverOptions, QueryObserverResult } from "@tanstack/react-query";
-import { DEFAULT_METHOD_OPTIONS, onQueryError, queryClient } from "config";
+import { DEFAULT_METHOD_OPTIONS, onQueryError, queryClient } from "./config";
 import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
 
@@ -105,17 +105,16 @@ export class QueryService {
         });
       });
 
-      // onSuccess будет вызываться всегда 1 раз
-      // 1 вариант - getOptimisticResult вызовет его, если это запрос. Наш вызов не сработает, так как запрос не успеет выполнится
-      // 2 вариант - запрос не выполняется, данные уже есть в кэше - выполняется наш onSuccess
       this.queryResult = this.observer?.getOptimisticResult({
         useErrorBoundary: false,
         refetchOnReconnect: false,
         ...this.queryParams,
       });
 
-      if (this.queryResult?.data) {
-        this.queryParams.onSuccess && this.queryParams.onSuccess(this.queryResult.data);
+      // Свой onSuccess зовём, только если данные взяты из кэша и запроса не будет:
+      // при идущем запросе его вызовет сам react-query, иначе получим двойной вызов.
+      if (this.queryResult?.data && !this.queryResult.isFetching) {
+        this.queryParams.onSuccess?.(this.queryResult.data);
       }
     });
   };
