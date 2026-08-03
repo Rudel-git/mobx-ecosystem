@@ -138,7 +138,7 @@ export class FieldService<T, P extends FieldProps<T> = FieldProps<T>> implements
   }
 
   get isTouched() {
-    return !this.isInit || this.isBlurred
+    return !this.isInit; //|| this.isBlurred
   }
 
   setDisabledFn = (disabledFn: FieldOptionsType<T>['disabledFn']) => {
