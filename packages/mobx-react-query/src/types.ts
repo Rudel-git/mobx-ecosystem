@@ -9,9 +9,6 @@ export interface MobxReactQueryConfiguration {
   onQueryError?: OnErrorCallback;
 
   /** Удобно класть общую обработку ошибок. Например тосты */
-  onInfiniteQueryError?: OnErrorCallback;
-
-  /** Удобно класть общую обработку ошибок. Например тосты */
   onMutationError?: OnErrorCallback;
 }
 

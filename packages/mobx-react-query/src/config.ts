@@ -17,7 +17,6 @@ export let queryClient = new QueryClient({
 });
 
 export let onQueryError: OnErrorCallback;
-export let onInfiniteQueryError: OnErrorCallback;
 export let onMutationError: OnErrorCallback;
 
 export const configureMobxReactQuery = (options: MobxReactQueryConfiguration) => {
@@ -27,10 +26,6 @@ export const configureMobxReactQuery = (options: MobxReactQueryConfiguration) =>
 
   if (options?.onQueryError) {
     onQueryError = options?.onQueryError;
-  }
-
-  if (options?.onInfiniteQueryError) {
-    onInfiniteQueryError = options?.onInfiniteQueryError;
   }
 
   if (options?.onMutationError) {
