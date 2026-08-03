@@ -65,7 +65,7 @@ export class QueryService {
     this.isQueryLoading = false;
     this.isQueryFullLoading = true;
 
-    return new Promise<TData>((resolve, reject) => {
+    return new Promise<TData | undefined>((resolve, reject) => {
       this.queryParams = {
         ...params,
         retry: false,
@@ -80,7 +80,14 @@ export class QueryService {
         onError: (error: ServerError) => {
           options?.hasToast && onQueryError?.(error);
           params.onError?.(error);
-          options?.rejectable && reject(error);
+
+          // Промис обязан завершиться в любом случае: если не реджектим —
+          // резолвим undefined, иначе await зависает навсегда.
+          if (options?.rejectable) {
+            reject(error);
+          } else {
+            resolve(undefined);
+          }
 
           runInAction(() => {
             this.isQueryFullLoading = false;

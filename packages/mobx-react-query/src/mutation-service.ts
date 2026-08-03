@@ -53,7 +53,7 @@ export class MutationService {
     this.isMutationLoading = false;
     this.isMutationFullLoading = true;
 
-    return new Promise<TData>((resolve, reject) => {
+    return new Promise<TData | undefined>((resolve, reject) => {
        this.params = {
         ...params,
         onSuccess: (data: TData, variables: TVariables, context: TContext | undefined) => {
@@ -76,7 +76,13 @@ export class MutationService {
             this.isMutationFullLoading = false;
           })
 
-          options?.rejectable && reject(error)
+          // Промис обязан завершиться в любом случае: если не реджектим —
+          // резолвим undefined, иначе await зависает навсегда.
+          if (options?.rejectable) {
+            reject(error);
+          } else {
+            resolve(undefined);
+          }
         },
       } as MutationObserverOptions;
 
