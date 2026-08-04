@@ -76,4 +76,102 @@ describe("QueryService", () => {
       expect(result).toBeUndefined();
     });
   });
+
+  describe("data", () => {
+    it("до запроса -> undefined", () => {
+      setupClient(0);
+
+      expect(new QueryService().data).toBeUndefined();
+    });
+
+    it("после успеха -> данные запроса", async () => {
+      setupClient(0);
+
+      const service = new QueryService<string>();
+      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("value");
+
+      await service.fetch({ queryKey: ["data"], queryFn });
+      await flush();
+
+      expect(service.data).toBe("value");
+    });
+
+    it("после инвалидации -> новые данные без onSuccess", async () => {
+      setupClient(0);
+
+      const service = new QueryService<string>();
+      const queryFn = jest
+        .fn<() => Promise<string>>()
+        .mockResolvedValueOnce("first")
+        .mockResolvedValueOnce("second");
+
+      await service.fetch({ queryKey: ["inv"], queryFn });
+      await flush();
+      expect(service.data).toBe("first");
+
+      await service.queryClient.invalidateQueries({ queryKey: ["inv"] });
+      await flush();
+
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(service.data).toBe("second");
+    });
+  });
+
+  describe("remove", () => {
+    it("удаляет запись из кэша, следующий запрос идёт на сервер", async () => {
+      setupClient(60_000);
+
+      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("cached");
+
+      const first = new QueryService<string>();
+      await first.fetch({ queryKey: ["rm"], queryFn });
+      await flush();
+
+      first.remove();
+      first.dispose();
+
+      await new QueryService<string>().fetch({ queryKey: ["rm"], queryFn });
+      await flush();
+
+      // без remove данные взялись бы из кэша и второго запроса не было бы
+      expect(queryFn).toHaveBeenCalledTimes(2);
+    });
+
+    it("до запроса ничего не делает и не падает", () => {
+      setupClient(0);
+
+      expect(() => new QueryService().remove()).not.toThrow();
+    });
+
+    it("при живой подписке не провоцирует повторный запрос", async () => {
+      setupClient(60_000);
+
+      const service = new QueryService<string>();
+      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("value");
+
+      await service.fetch({ queryKey: ["rm-live"], queryFn });
+      await flush();
+
+      service.remove();
+      await flush();
+
+      expect(queryFn).toHaveBeenCalledTimes(1);
+    });
+
+    it("сбрасывает data, как того ждёт reset() в сервисах", async () => {
+      setupClient(60_000);
+
+      const service = new QueryService<string>();
+      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("value");
+
+      await service.fetch({ queryKey: ["rm-data"], queryFn });
+      await flush();
+      expect(service.data).toBe("value");
+
+      service.remove();
+      await flush();
+
+      expect(service.data).toBeUndefined();
+    });
+  });
 });
