@@ -1,4 +1,4 @@
-import { MutationObserver, MutationObserverOptions, MutationObserverResult } from "@tanstack/react-query";
+import { MutationObserver, MutationObserverOptions, MutationObserverResult } from "@tanstack/query-core";
 import { DEFAULT_METHOD_OPTIONS, onMutationError, queryClient } from "./config";
 import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
@@ -6,7 +6,7 @@ import { AsyncServiceMethodOptions, ServerError } from "./types";
 export class MutationService {
   unsubscribe?: () => void;
   queryClient = queryClient;
-  observer?:  MutationObserver = new MutationObserver(queryClient, {});
+  observer?: MutationObserver = new MutationObserver(queryClient, {});
   private params?: MutationObserverOptions;
 
   mutationResult?: MutationObserverResult<
@@ -56,21 +56,20 @@ export class MutationService {
     return new Promise<TData | undefined>((resolve, reject) => {
        this.params = {
         ...params,
-        onSuccess: (data: TData, variables: TVariables, context: TContext | undefined) => {
-          params.onSuccess?.(data, variables, context);
-          resolve(data);
+        // Аргументы прокидываем как есть: их состав менялся между версиями.
+        onSuccess: (...args: Parameters<NonNullable<typeof params.onSuccess>>) => {
+          params.onSuccess?.(...args);
+          resolve(args[0]);
 
           runInAction(() => {
             this.isMutationFullLoading = false;
           })
         },
-        onError: (
-          error: ServerError,
-          variables: TVariables,
-          context?: TContext,
-        ) => {
+        onError: (...args: Parameters<NonNullable<typeof params.onError>>) => {
+          const [error] = args;
+
           options?.hasToast && onMutationError?.(error);
-          params.onError && params.onError(error, variables, context);
+          params.onError?.(...args);
 
           runInAction(() => {
             this.isMutationFullLoading = false;
@@ -84,13 +83,13 @@ export class MutationService {
             resolve(undefined);
           }
         },
-      } as MutationObserverOptions;
+      } as unknown as MutationObserverOptions;
 
       this.observer?.setOptions(this.params);
 
       this.unsubscribe = this.observer?.subscribe(result => {
         runInAction(() => {
-          this.isMutationLoading = result.isLoading;
+          this.isMutationLoading = result.isPending;
 
           this.mutationResult = result as MutationObserverResult<
             unknown,
@@ -101,7 +100,9 @@ export class MutationService {
         });
       });
 
-      this.observer?.mutate();
+      // Ошибку разбирает onError выше, а промис mutate игнорируем:
+      // иначе на каждой неудачной мутации будет необработанный отказ.
+      this.observer?.mutate().catch(() => undefined);
     });
   };
 }

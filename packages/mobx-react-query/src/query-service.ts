@@ -1,4 +1,4 @@
-import { QueryFunctionContext, QueryKey, QueryObserver, QueryObserverOptions, QueryObserverResult } from "@tanstack/react-query";
+import { QueryFunctionContext, QueryKey, QueryObserver, QueryObserverOptions, QueryObserverResult } from "@tanstack/query-core";
 import { DEFAULT_METHOD_OPTIONS, onQueryError, queryClient, unwrapQueryFnData } from "./config";
 import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
@@ -8,7 +8,7 @@ export class QueryService<TResult = unknown> {
 
   queryClient = queryClient;
   observer?: QueryObserver;
-  private queryParams?: QueryObserverOptions<unknown, unknown, unknown, unknown, QueryKey>;
+  private queryParams?: QueryObserverOptions<unknown, Error, unknown, unknown, QueryKey>;
   queryResult?: QueryObserverResult<TResult>;
 
   /** Данные последнего запроса. Undefined, пока запрос не завершился успехом. */
@@ -27,29 +27,29 @@ export class QueryService<TResult = unknown> {
   isQueryFetching = false;
 
   /**
-   * Вызывается только при первом фетчинге, завершается после выполнения onSuccess/onError
-   * Начальное значение настраивается через setSettings
-   * @default true
+   * Первый запрос ещё не завершился — в том числе если он ещё не начинался.
+   * Этим отличается от isQueryLoading, который до первого fetch равен false.
    */
-  isQueryFullLoading = true;
+  isQueryInitialLoading = true;
 
   constructor() {
     makeAutoObservable(this);
   }
 
-  /**
-   * initWithLoading - isQueryFullLoading будет true сразу
-   */
-  setSettings = (settings: { initWithLoading?: boolean }) => {
-    this.isQueryFullLoading = settings?.initWithLoading || true;
-  }
+  /** getOptimisticResult ждёт options с заполненными дефолтами. */
+  private defaulted = (options: unknown) =>
+    options as Parameters<QueryObserver["getOptimisticResult"]>[0];
 
   private createNewObserver = () => {
     this.destroyObserver();
-    this.observer = new QueryObserver(queryClient, {})
+    this.observer = new QueryObserver(queryClient, { queryKey: [] as QueryKey })
   }
 
-  /** Аналог useQuery */
+  /**
+   * Аналог useQuery: подписывается на запрос и ждёт первого результата.
+   * У запросов в v5 нет onSuccess/onError, поэтому промис завершаем сами —
+   * по первому успеху или ошибке в потоке результатов.
+   */
   fetch = async <
     TQueryFnData = unknown,
     TData = TQueryFnData,
@@ -68,69 +68,81 @@ export class QueryService<TResult = unknown> {
     this.createNewObserver();
 
     this.isQueryLoading = false;
-    this.isQueryFullLoading = true;
+    this.isQueryInitialLoading = true;
 
     // Разворачиваем на записи, чтобы в кэш попадали предметные данные, а не
     // HTTP-конверт. Ошибки идут мимо: queryFn их бросает, а не возвращает.
     const unwrap = unwrapQueryFnData;
     const rawQueryFn = params.queryFn;
     const unwrappedQueryFn =
-      !unwrap || !rawQueryFn
+      !unwrap || !rawQueryFn || typeof rawQueryFn !== "function"
         ? rawQueryFn
         : async (context: QueryFunctionContext<TQueryKey>) =>
             unwrap(await rawQueryFn(context)) as TQueryFnData;
 
+    this.queryParams = {
+      ...params,
+      retry: false,
+      queryFn: unwrappedQueryFn,
+    } as QueryObserverOptions<unknown, Error, unknown, unknown, QueryKey>;
+
+    this.observer?.setOptions(this.queryParams);
+
     return new Promise<TData | undefined>((resolve, reject) => {
-      this.queryParams = {
-        ...params,
-        retry: false,
-        queryFn: unwrappedQueryFn,
-        onSuccess: (data: TData) => {
-          params.onSuccess?.(data);
-          resolve(data);
+      let isSettled = false;
 
+      const settle = (result: QueryObserverResult<TResult, Error>) => {
+        if (isSettled || result.isFetching) {
+          return;
+        }
+
+        if (result.isSuccess) {
+          isSettled = true;
           runInAction(() => {
-            this.isQueryFullLoading = false;
+            this.isQueryInitialLoading = false;
           });
-        },
-        onError: (error: ServerError) => {
-          options?.hasToast && onQueryError?.(error);
-          params.onError?.(error);
+          resolve(result.data as unknown as TData);
 
-          // Промис обязан завершиться в любом случае: если не реджектим —
-          // резолвим undefined, иначе await зависает навсегда.
+          return;
+        }
+
+        if (result.isError) {
+          isSettled = true;
+          options?.hasToast && onQueryError?.(result.error as ServerError);
+          runInAction(() => {
+            this.isQueryInitialLoading = false;
+          });
+
           if (options?.rejectable) {
-            reject(error);
+            reject(result.error);
           } else {
+            // Промис обязан завершиться в любом случае: иначе await зависает.
             resolve(undefined);
           }
+        }
+      };
 
-          runInAction(() => {
-            this.isQueryFullLoading = false;
-          });
-        },
-      } as QueryObserverOptions<unknown, unknown, unknown, unknown, QueryKey>;
-
-      this.observer?.setOptions(this.queryParams);
-
-      this.unsubscribe = this.observer?.subscribe(result => {
+      this.unsubscribe = this.observer?.subscribe((result) => {
         runInAction(() => {
           this.queryResult = result as QueryObserverResult<TResult>;
-          this.isQueryLoading = Boolean(result?.isLoading);
+          this.isQueryLoading = Boolean(result?.isPending);
           this.isQueryFetching = Boolean(result?.isFetching);
         });
+
+        settle(result as QueryObserverResult<TResult, Error>);
       });
 
-      this.queryResult = this.observer?.getOptimisticResult({
-        useErrorBoundary: false,
-        refetchOnReconnect: false,
-        ...this.queryParams,
-      }) as QueryObserverResult<TResult> | undefined;
+      this.queryResult = this.observer?.getOptimisticResult(
+        this.defaulted({
+          throwOnError: false,
+          refetchOnReconnect: false,
+          ...this.queryParams,
+        }),
+      ) as QueryObserverResult<TResult> | undefined;
 
-      // Свой onSuccess зовём, только если данные взяты из кэша и запроса не будет:
-      // при идущем запросе его вызовет сам react-query, иначе получим двойной вызов.
-      if (this.queryResult?.data && !this.queryResult.isFetching) {
-        this.queryParams.onSuccess?.(this.queryResult.data);
+      // Данные уже в кэше и запроса не будет — завершаем сразу.
+      if (this.queryResult) {
+        settle(this.queryResult as QueryObserverResult<TResult, Error>);
       }
     });
   };
@@ -147,7 +159,9 @@ export class QueryService<TResult = unknown> {
     const key = queryKey ?? this.queryParams?.queryKey;
 
     if (!key) {
-      return;
+      throw new Error(
+        "QueryService.setData: до первого fetch нужен queryKey — иначе данные некуда положить и неоткуда читать",
+      );
     }
 
     if (!this.queryParams?.queryKey) {
@@ -170,11 +184,9 @@ export class QueryService<TResult = unknown> {
       });
     });
 
-    this.queryResult = this.observer?.getOptimisticResult({
-      useErrorBoundary: false,
-      refetchOnReconnect: false,
-      ...this.queryParams,
-    }) as QueryObserverResult<TResult>;
+    this.queryResult = this.observer?.getOptimisticResult(
+      this.defaulted(this.queryParams),
+    ) as QueryObserverResult<TResult>;
   };
 
   /**

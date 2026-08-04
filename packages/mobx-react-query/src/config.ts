@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/query-core";
 import { MobxReactQueryConfiguration, OnErrorCallback, UnwrapQueryFnData } from "./types";
 
 export const DEFAULT_METHOD_OPTIONS = {

@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/query-core";
 import { configureMobxReactQuery } from "./config";
 import { QueryService } from "./query-service";
 
@@ -15,19 +15,24 @@ const setupClient = (staleTime: number) => {
 
 describe("QueryService", () => {
   describe("fetch", () => {
-    it("без кэша -> onSuccess вызывается один раз", async () => {
+    it("без кэша -> запрос один раз, промис резолвится данными", async () => {
       setupClient(0);
 
-      const onSuccess = jest.fn<(data: unknown) => void>();
-      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("first");
+      const queryFn = jest
+        .fn<() => Promise<string>>()
+        .mockResolvedValue("first");
 
-      await new QueryService().fetch({ queryKey: ["k"], queryFn, onSuccess });
+      const result = await new QueryService().fetch({
+        queryKey: ["k"],
+        queryFn,
+      });
       await flush();
 
-      expect(onSuccess).toHaveBeenCalledTimes(1);
+      expect(queryFn).toHaveBeenCalledTimes(1);
+      expect(result).toBe("first");
     });
 
-    it("кэш есть, но данные протухли -> onSuccess один раз, и с новыми данными", async () => {
+    it("данные протухли -> запрос повторяется, приходят новые", async () => {
       setupClient(0);
 
       const queryFn = jest
@@ -36,37 +41,38 @@ describe("QueryService", () => {
         .mockResolvedValueOnce("fresh");
 
       await new QueryService().fetch({ queryKey: ["k"], queryFn });
-
-      const onSuccess = jest.fn<(data: unknown) => void>();
-
-      await new QueryService().fetch({ queryKey: ["k"], queryFn, onSuccess });
       await flush();
 
-      expect(onSuccess).toHaveBeenCalledTimes(1);
-      expect(onSuccess).toHaveBeenCalledWith("fresh");
+      const result = await new QueryService().fetch({ queryKey: ["k"], queryFn });
+      await flush();
+
+      expect(queryFn).toHaveBeenCalledTimes(2);
+      expect(result).toBe("fresh");
     });
 
-    it("данные свежие -> запрос не повторяется, onSuccess один раз", async () => {
+    it("данные свежие -> запроса нет, промис резолвится кэшем", async () => {
       setupClient(60_000);
 
-      const queryFn = jest.fn<() => Promise<string>>().mockResolvedValue("cached");
+      const queryFn = jest
+        .fn<() => Promise<string>>()
+        .mockResolvedValue("cached");
 
       await new QueryService().fetch({ queryKey: ["k"], queryFn });
+      await flush();
 
-      const onSuccess = jest.fn<(data: unknown) => void>();
-
-      await new QueryService().fetch({ queryKey: ["k"], queryFn, onSuccess });
+      const result = await new QueryService().fetch({ queryKey: ["k"], queryFn });
       await flush();
 
       expect(queryFn).toHaveBeenCalledTimes(1);
-      expect(onSuccess).toHaveBeenCalledTimes(1);
-      expect(onSuccess).toHaveBeenCalledWith("cached");
+      expect(result).toBe("cached");
     });
 
     it("ошибка при rejectable: false -> промис завершается, а не виснет", async () => {
       setupClient(0);
 
-      const queryFn = jest.fn<() => Promise<string>>().mockRejectedValue(new Error("boom"));
+      const queryFn = jest
+        .fn<() => Promise<string>>()
+        .mockRejectedValue(new Error("boom"));
 
       const result = await new QueryService().fetch(
         { queryKey: ["err"], queryFn },
@@ -74,6 +80,63 @@ describe("QueryService", () => {
       );
 
       expect(result).toBeUndefined();
+    });
+
+    it("ошибка при rejectable: true -> промис реджектится", async () => {
+      setupClient(0);
+
+      const error = new Error("boom");
+      const queryFn = jest.fn<() => Promise<string>>().mockRejectedValue(error);
+
+      await expect(
+        new QueryService().fetch(
+          { queryKey: ["err-reject"], queryFn },
+          { hasToast: false, rejectable: true },
+        ),
+      ).rejects.toBe(error);
+    });
+  });
+
+  describe("isQueryInitialLoading", () => {
+    it("до первого fetch -> true, а isQueryLoading -> false", () => {
+      setupClient(0);
+
+      const service = new QueryService();
+
+      // ради этого флаг и нужен: лоадер на старте, пока запрос не начался
+      expect(service.isQueryInitialLoading).toBe(true);
+      expect(service.isQueryLoading).toBe(false);
+    });
+
+    it("после успешного запроса -> false", async () => {
+      setupClient(0);
+
+      const service = new QueryService<string>();
+
+      await service.fetch({
+        queryKey: ["init-ok"],
+        queryFn: async () => "done",
+      });
+
+      expect(service.isQueryInitialLoading).toBe(false);
+    });
+
+    it("после ошибки -> false, лоадер не залипает", async () => {
+      setupClient(0);
+
+      const service = new QueryService<string>();
+
+      await service.fetch(
+        {
+          queryKey: ["init-err"],
+          queryFn: async () => {
+            throw new Error("boom");
+          },
+        },
+        { hasToast: false, rejectable: false },
+      );
+
+      expect(service.isQueryInitialLoading).toBe(false);
     });
   });
 
@@ -217,23 +280,19 @@ describe("QueryService", () => {
       expect(service.queryClient.getQueryData(["uw-on"])).toBe("payload");
     });
 
-    it("onSuccess и результат fetch получают уже развёрнутое", async () => {
+    it("результат fetch — уже развёрнутый", async () => {
       setupClient(0);
       configureMobxReactQuery({
         unwrapQueryFnData: (raw) => (raw as { data?: unknown })?.data,
       });
 
-      const onSuccess = jest.fn<(data: unknown) => void>();
-
       const result = await new QueryService().fetch({
         queryKey: ["uw-callback"],
         queryFn: async () => axiosLike("payload"),
-        onSuccess,
       });
       await flush();
 
       expect(result).toBe("payload");
-      expect(onSuccess).toHaveBeenCalledWith("payload");
     });
 
     it("ошибка доезжает целиком: распаковка её не трогает", async () => {
@@ -246,24 +305,17 @@ describe("QueryService", () => {
         response: { status: 404, data: { message: "нет такого" } },
       });
 
-      const onError = jest.fn<(e: unknown) => void>();
-
-      await new QueryService()
-        .fetch(
+      await expect(
+        new QueryService().fetch(
           {
             queryKey: ["uw-error"],
             queryFn: async () => {
               throw error;
             },
-            onError,
           },
-          { hasToast: false, rejectable: false },
-        )
-        .catch(() => undefined);
-      await flush();
-
-      expect(onError).toHaveBeenCalledWith(error);
-      expect(onError.mock.calls[0][0]).toBe(error);
+          { hasToast: false, rejectable: true },
+        ),
+      ).rejects.toBe(error);
     });
   });
 
@@ -290,10 +342,12 @@ describe("QueryService", () => {
       expect(queryFn).toHaveBeenCalledTimes(1);
     });
 
-    it("до запроса ничего не делает и не падает", () => {
+    it("до запроса без ключа -> внятная ошибка, а не тишина", () => {
       setupClient(0);
 
-      expect(() => new QueryService<string>().setData("x")).not.toThrow();
+      expect(() => new QueryService<string>().setData("x")).toThrow(
+        /queryKey/,
+      );
     });
 
     it("запроса не было -> setData с ключом делает data читаемым", async () => {
