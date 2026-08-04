@@ -136,14 +136,45 @@ export class QueryService<TResult = unknown> {
   };
 
   /**
-   * Кладёт данные в кэш запроса, которым сейчас занят сервис.
-   * Для мутаций, чей ответ уже содержит свежую сущность: перезапрос не нужен,
-   * а подписчики получат обновление сами.
+   * Кладёт данные в кэш: ответ мутации уже содержит свежую сущность,
+   * перезапрашивать её незачем.
+   *
+   * queryKey нужен, когда запроса ещё не было — например, сущность только что
+   * создали. Тогда сервис заодно начинает следить за этим ключом, иначе
+   * читать data было бы неоткуда.
    */
-  setData = (data: TResult) => {
-    if (this.queryParams?.queryKey) {
-      this.queryClient.setQueryData(this.queryParams.queryKey, data);
+  setData = (data: TResult, queryKey?: QueryKey) => {
+    const key = queryKey ?? this.queryParams?.queryKey;
+
+    if (!key) {
+      return;
     }
+
+    if (!this.queryParams?.queryKey) {
+      this.observe(key);
+    }
+
+    this.queryClient.setQueryData(key, data);
+  };
+
+  /** Следит за ключом, не запрашивая его: данные берутся из кэша. */
+  private observe = (queryKey: QueryKey) => {
+    this.createNewObserver();
+
+    this.queryParams = { queryKey, enabled: false };
+    this.observer?.setOptions(this.queryParams);
+
+    this.unsubscribe = this.observer?.subscribe((result) => {
+      runInAction(() => {
+        this.queryResult = result as QueryObserverResult<TResult>;
+      });
+    });
+
+    this.queryResult = this.observer?.getOptimisticResult({
+      useErrorBoundary: false,
+      refetchOnReconnect: false,
+      ...this.queryParams,
+    }) as QueryObserverResult<TResult>;
   };
 
   /**

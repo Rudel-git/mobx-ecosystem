@@ -295,5 +295,50 @@ describe("QueryService", () => {
 
       expect(() => new QueryService<string>().setData("x")).not.toThrow();
     });
+
+    it("запроса не было -> setData с ключом делает data читаемым", async () => {
+      setupClient(0);
+
+      const service = new QueryService<{ id: number }>();
+
+      // сущность только что создали: fetch по ней не делали ни разу
+      service.setData({ id: 7 }, ["entity", 7]);
+      await flush();
+
+      expect(service.data).toEqual({ id: 7 });
+      expect(service.queryClient.getQueryData(["entity", 7])).toEqual({ id: 7 });
+    });
+
+    it("после setData с ключом данные обновляются повторно", async () => {
+      setupClient(0);
+
+      const service = new QueryService<{ id: number }>();
+
+      service.setData({ id: 1 }, ["entity", 1]);
+      await flush();
+
+      service.setData({ id: 2 });
+      await flush();
+
+      expect(service.data).toEqual({ id: 2 });
+    });
+
+    it("запрос уже был -> ключ не нужен", async () => {
+      setupClient(60_000);
+      configureMobxReactQuery({ unwrapQueryFnData: undefined });
+
+      const service = new QueryService<string>();
+
+      await service.fetch({
+        queryKey: ["existing"],
+        queryFn: async () => "first",
+      });
+      await flush();
+
+      service.setData("second");
+      await flush();
+
+      expect(service.data).toBe("second");
+    });
   });
 });
