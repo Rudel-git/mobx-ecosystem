@@ -175,69 +175,125 @@ describe("QueryService", () => {
     });
   });
 
-  describe("unwrapQueryData", () => {
-    it("не задан -> data отдаётся как есть", async () => {
-      setupClient(0);
-
-      const service = new QueryService<{ data: string }>();
-      const queryFn = jest
-        .fn<() => Promise<{ data: string }>>()
-        .mockResolvedValue({ data: "payload" });
-
-      await service.fetch({ queryKey: ["uw-off"], queryFn });
-      await flush();
-
-      expect(service.data).toEqual({ data: "payload" });
+  describe("unwrapQueryFnData", () => {
+    const axiosLike = <T>(data: T) => ({
+      data,
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
     });
 
-    it("задан -> data развёрнут, конверт наружу не течёт", async () => {
+    it("не задан -> в кэше лежит то, что вернул queryFn", async () => {
+      setupClient(0);
+      configureMobxReactQuery({ unwrapQueryFnData: undefined });
+
+      const service = new QueryService<{ data: string }>();
+
+      await service.fetch({
+        queryKey: ["uw-off"],
+        queryFn: async () => axiosLike("payload"),
+      });
+      await flush();
+
+      expect(service.data).toMatchObject({ data: "payload" });
+    });
+
+    it("задан -> в кэш попадают предметные данные, без конверта", async () => {
       setupClient(0);
       configureMobxReactQuery({
-        unwrapQueryData: (raw) => (raw as { data?: unknown })?.data,
+        unwrapQueryFnData: (raw) => (raw as { data?: unknown })?.data,
+      });
+
+      const service = new QueryService<string>();
+
+      await service.fetch({
+        queryKey: ["uw-on"],
+        queryFn: async () => axiosLike("payload"),
+      });
+      await flush();
+
+      expect(service.data).toBe("payload");
+      expect(service.queryClient.getQueryData(["uw-on"])).toBe("payload");
+    });
+
+    it("onSuccess и результат fetch получают уже развёрнутое", async () => {
+      setupClient(0);
+      configureMobxReactQuery({
+        unwrapQueryFnData: (raw) => (raw as { data?: unknown })?.data,
+      });
+
+      const onSuccess = jest.fn<(data: unknown) => void>();
+
+      const result = await new QueryService().fetch({
+        queryKey: ["uw-callback"],
+        queryFn: async () => axiosLike("payload"),
+        onSuccess,
+      });
+      await flush();
+
+      expect(result).toBe("payload");
+      expect(onSuccess).toHaveBeenCalledWith("payload");
+    });
+
+    it("ошибка доезжает целиком: распаковка её не трогает", async () => {
+      setupClient(0);
+      configureMobxReactQuery({
+        unwrapQueryFnData: (raw) => (raw as { data?: unknown })?.data,
+      });
+
+      const error = Object.assign(new Error("boom"), {
+        response: { status: 404, data: { message: "нет такого" } },
+      });
+
+      const onError = jest.fn<(e: unknown) => void>();
+
+      await new QueryService()
+        .fetch(
+          {
+            queryKey: ["uw-error"],
+            queryFn: async () => {
+              throw error;
+            },
+            onError,
+          },
+          { hasToast: false, rejectable: false },
+        )
+        .catch(() => undefined);
+      await flush();
+
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(onError.mock.calls[0][0]).toBe(error);
+    });
+  });
+
+  describe("setData", () => {
+    it("кладёт предметные данные, их видит data", async () => {
+      setupClient(60_000);
+      configureMobxReactQuery({
+        unwrapQueryFnData: (raw) => (raw as { data?: unknown })?.data,
       });
 
       const service = new QueryService<string>();
       const queryFn = jest
         .fn<() => Promise<{ data: string }>>()
-        .mockResolvedValue({ data: "payload" });
+        .mockResolvedValue({ data: "first" });
 
-      await service.fetch({ queryKey: ["uw-on"], queryFn });
+      await service.fetch({ queryKey: ["set"], queryFn });
+      await flush();
+      expect(service.data).toBe("first");
+
+      service.setData("second");
       await flush();
 
-      expect(service.data).toBe("payload");
+      expect(service.data).toBe("second");
+      expect(queryFn).toHaveBeenCalledTimes(1);
     });
 
-    it("не влияет на onSuccess и на результат fetch", async () => {
+    it("до запроса ничего не делает и не падает", () => {
       setupClient(0);
-      configureMobxReactQuery({
-        unwrapQueryData: (raw) => (raw as { data?: unknown })?.data,
-      });
 
-      const onSuccess = jest.fn<(data: unknown) => void>();
-      const queryFn = jest
-        .fn<() => Promise<{ data: string }>>()
-        .mockResolvedValue({ data: "payload" });
-
-      const result = await new QueryService().fetch({
-        queryKey: ["uw-callback"],
-        queryFn,
-        onSuccess,
-      });
-      await flush();
-
-      expect(result).toEqual({ data: "payload" });
-      expect(onSuccess).toHaveBeenCalledWith({ data: "payload" });
-    });
-
-    it("нет данных -> undefined, распаковщик не падает", async () => {
-      setupClient(0);
-      configureMobxReactQuery({
-        unwrapQueryData: (raw) => (raw as { data?: unknown })?.data,
-      });
-
-      expect(new QueryService().data).toBeUndefined();
-
-      configureMobxReactQuery({ unwrapQueryData: undefined });
+      expect(() => new QueryService<string>().setData("x")).not.toThrow();
     });
   });
 });

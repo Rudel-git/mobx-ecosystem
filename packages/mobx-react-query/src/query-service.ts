@@ -1,5 +1,5 @@
-import { QueryKey, QueryObserver, QueryObserverOptions, QueryObserverResult } from "@tanstack/react-query";
-import { DEFAULT_METHOD_OPTIONS, onQueryError, queryClient, unwrapQueryData } from "./config";
+import { QueryFunctionContext, QueryKey, QueryObserver, QueryObserverOptions, QueryObserverResult } from "@tanstack/react-query";
+import { DEFAULT_METHOD_OPTIONS, onQueryError, queryClient, unwrapQueryFnData } from "./config";
 import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
 
@@ -11,16 +11,9 @@ export class QueryService<TResult = unknown> {
   private queryParams?: QueryObserverOptions<unknown, unknown, unknown, unknown, QueryKey>;
   queryResult?: QueryObserverResult<TResult>;
 
-  /**
-   * Данные последнего запроса, развёрнутые через unwrapQueryData из конфига.
-   * Undefined, пока запрос не завершился успехом.
-   */
+  /** Данные последнего запроса. Undefined, пока запрос не завершился успехом. */
   get data() {
-    const raw = this.queryResult?.data;
-
-    return (unwrapQueryData ? unwrapQueryData(raw) : raw) as
-      | TResult
-      | undefined;
+    return this.queryResult?.data;
   }
 
   /**
@@ -77,10 +70,21 @@ export class QueryService<TResult = unknown> {
     this.isQueryLoading = false;
     this.isQueryFullLoading = true;
 
+    // Разворачиваем на записи, чтобы в кэш попадали предметные данные, а не
+    // HTTP-конверт. Ошибки идут мимо: queryFn их бросает, а не возвращает.
+    const unwrap = unwrapQueryFnData;
+    const rawQueryFn = params.queryFn;
+    const unwrappedQueryFn =
+      !unwrap || !rawQueryFn
+        ? rawQueryFn
+        : async (context: QueryFunctionContext<TQueryKey>) =>
+            unwrap(await rawQueryFn(context)) as TQueryFnData;
+
     return new Promise<TData | undefined>((resolve, reject) => {
       this.queryParams = {
         ...params,
         retry: false,
+        queryFn: unwrappedQueryFn,
         onSuccess: (data: TData) => {
           params.onSuccess?.(data);
           resolve(data);
@@ -129,6 +133,17 @@ export class QueryService<TResult = unknown> {
         this.queryParams.onSuccess?.(this.queryResult.data);
       }
     });
+  };
+
+  /**
+   * Кладёт данные в кэш запроса, которым сейчас занят сервис.
+   * Для мутаций, чей ответ уже содержит свежую сущность: перезапрос не нужен,
+   * а подписчики получат обновление сами.
+   */
+  setData = (data: TResult) => {
+    if (this.queryParams?.queryKey) {
+      this.queryClient.setQueryData(this.queryParams.queryKey, data);
+    }
   };
 
   /**

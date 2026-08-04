@@ -12,14 +12,15 @@ export interface MobxReactQueryConfiguration {
   onMutationError?: OnErrorCallback;
 
   /**
-   * Разворачивает ответ транспорта перед отдачей в QueryService.data.
-   * Например, для axios: (res) => res?.data — чтобы сервисы не знали про конверт.
-   * На onSuccess и результат fetch не влияет.
+   * Разворачивает результат queryFn перед тем, как он попадёт в кэш.
+   * Например, для axios: (res) => res?.data — тогда в кэше лежат предметные
+   * данные, а не HTTP-конверт. Ошибки идут мимо: они бросаются, а не возвращаются.
+   * Мутаций не касается.
    */
-  unwrapQueryData?: UnwrapQueryData;
+  unwrapQueryFnData?: UnwrapQueryFnData;
 }
 
-export type UnwrapQueryData = ((raw: unknown) => unknown) | undefined;
+export type UnwrapQueryFnData = ((raw: unknown) => unknown) | undefined;
 
 /***
  * rejectable - выключает reject ошибок, в onError, onSettled все еще будет приходить
