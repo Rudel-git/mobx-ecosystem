@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { MobxReactQueryConfiguration, OnErrorCallback } from "./types";
+import { MobxReactQueryConfiguration, OnErrorCallback, UnwrapQueryData } from "./types";
 
 export const DEFAULT_METHOD_OPTIONS = {
   hasToast: true,
@@ -18,6 +18,7 @@ export let queryClient = new QueryClient({
 
 export let onQueryError: OnErrorCallback;
 export let onMutationError: OnErrorCallback;
+export let unwrapQueryData: UnwrapQueryData;
 
 export const configureMobxReactQuery = (options: MobxReactQueryConfiguration) => {
   if (options?.queryClient) {
@@ -30,5 +31,11 @@ export const configureMobxReactQuery = (options: MobxReactQueryConfiguration) =>
 
   if (options?.onMutationError) {
     onMutationError = options?.onMutationError;
+  }
+
+  // Проверяем наличие ключа, а не значение: так распаковку можно и снять,
+  // передав undefined. Нужно, чтобы конфиг не залипал между тестами.
+  if (options && "unwrapQueryData" in options) {
+    unwrapQueryData = options.unwrapQueryData;
   }
 }

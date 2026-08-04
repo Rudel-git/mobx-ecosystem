@@ -10,7 +10,16 @@ export interface MobxReactQueryConfiguration {
 
   /** Удобно класть общую обработку ошибок. Например тосты */
   onMutationError?: OnErrorCallback;
+
+  /**
+   * Разворачивает ответ транспорта перед отдачей в QueryService.data.
+   * Например, для axios: (res) => res?.data — чтобы сервисы не знали про конверт.
+   * На onSuccess и результат fetch не влияет.
+   */
+  unwrapQueryData?: UnwrapQueryData;
 }
+
+export type UnwrapQueryData = ((raw: unknown) => unknown) | undefined;
 
 /***
  * rejectable - выключает reject ошибок, в onError, onSettled все еще будет приходить

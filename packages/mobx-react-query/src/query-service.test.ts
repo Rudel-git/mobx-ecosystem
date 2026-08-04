@@ -174,4 +174,70 @@ describe("QueryService", () => {
       expect(service.data).toBeUndefined();
     });
   });
+
+  describe("unwrapQueryData", () => {
+    it("не задан -> data отдаётся как есть", async () => {
+      setupClient(0);
+
+      const service = new QueryService<{ data: string }>();
+      const queryFn = jest
+        .fn<() => Promise<{ data: string }>>()
+        .mockResolvedValue({ data: "payload" });
+
+      await service.fetch({ queryKey: ["uw-off"], queryFn });
+      await flush();
+
+      expect(service.data).toEqual({ data: "payload" });
+    });
+
+    it("задан -> data развёрнут, конверт наружу не течёт", async () => {
+      setupClient(0);
+      configureMobxReactQuery({
+        unwrapQueryData: (raw) => (raw as { data?: unknown })?.data,
+      });
+
+      const service = new QueryService<string>();
+      const queryFn = jest
+        .fn<() => Promise<{ data: string }>>()
+        .mockResolvedValue({ data: "payload" });
+
+      await service.fetch({ queryKey: ["uw-on"], queryFn });
+      await flush();
+
+      expect(service.data).toBe("payload");
+    });
+
+    it("не влияет на onSuccess и на результат fetch", async () => {
+      setupClient(0);
+      configureMobxReactQuery({
+        unwrapQueryData: (raw) => (raw as { data?: unknown })?.data,
+      });
+
+      const onSuccess = jest.fn<(data: unknown) => void>();
+      const queryFn = jest
+        .fn<() => Promise<{ data: string }>>()
+        .mockResolvedValue({ data: "payload" });
+
+      const result = await new QueryService().fetch({
+        queryKey: ["uw-callback"],
+        queryFn,
+        onSuccess,
+      });
+      await flush();
+
+      expect(result).toEqual({ data: "payload" });
+      expect(onSuccess).toHaveBeenCalledWith({ data: "payload" });
+    });
+
+    it("нет данных -> undefined, распаковщик не падает", async () => {
+      setupClient(0);
+      configureMobxReactQuery({
+        unwrapQueryData: (raw) => (raw as { data?: unknown })?.data,
+      });
+
+      expect(new QueryService().data).toBeUndefined();
+
+      configureMobxReactQuery({ unwrapQueryData: undefined });
+    });
+  });
 });
