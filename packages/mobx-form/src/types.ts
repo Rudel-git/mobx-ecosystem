@@ -13,7 +13,9 @@ export type EmptyType<T> = never;
   // T extends object? null :
   // never;
 
-export type ValueType<T> = 
+export type ValueType<T> =
+  // Массив очищается в [] (см. getEmptyValueType), null для него не бывает.
+  T extends unknown[] ? T :
   T extends object ? T | null :
   T extends boolean ? boolean | null :
   T;
