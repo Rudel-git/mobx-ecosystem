@@ -4,7 +4,8 @@ import { isBoolean, isEqual, isNumber, isObject, isString } from './utils';
 import mitt, { Emitter } from 'mitt';
 
 type FieldProps<T> = {
-  value: T,
+  // props отдают this.value, а он очищается в null/'' — потребитель это видит
+  value: ValueType<T>,
   onChange: (_: any, value: ValueType<T>) => void;
   onBlur: (_: any) => void;
   error?: string;

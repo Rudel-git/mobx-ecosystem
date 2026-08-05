@@ -17,7 +17,8 @@ export type ValueType<T> =
   // Массив очищается в [] (см. getEmptyValueType), null для него не бывает.
   T extends unknown[] ? T :
   T extends object ? T | null :
-  T extends boolean ? boolean | null :
+  // Булево поле очищается в false (см. getEmptyValueType), null для него не бывает.
+  T extends boolean ? boolean :
   T;
 
 export type FormValues<Type> = Type extends IField
