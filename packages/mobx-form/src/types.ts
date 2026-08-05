@@ -66,7 +66,8 @@ export interface IForm<T> {
 
   disabled: boolean;
 
-  getValues: () => FormValues<ValueType<T>>
+  // объект значений возвращается всегда; null бывает у отдельных полей
+  getValues: () => FormValues<T>
 
   resetErrors: () => void;
 

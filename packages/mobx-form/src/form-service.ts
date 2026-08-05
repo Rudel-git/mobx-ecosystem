@@ -188,7 +188,8 @@ export class FormService<T extends FormServiceValuesType> implements IForm<T> {
       }
     }
 
-    return values as FormValues<ValueType<T>>;
+    // сам объект значений возвращается всегда; null бывает у отдельных полей
+    return values as FormValues<T>;
   };
 
   private getValue: any = (value: any) => {
