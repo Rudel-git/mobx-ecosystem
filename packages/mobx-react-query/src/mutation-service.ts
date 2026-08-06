@@ -3,6 +3,18 @@ import { DEFAULT_METHOD_OPTIONS, onMutationError, queryClient } from "./config";
 import { makeAutoObservable, runInAction } from "mobx";
 import { AsyncServiceMethodOptions, ServerError } from "./types";
 
+interface MutationFetch {
+  <TData = unknown, TVariables = unknown, TContext = unknown>(
+    params: MutationObserverOptions<TData, ServerError, TVariables, TContext>,
+    options: Partial<AsyncServiceMethodOptions> & { rejectable: true },
+  ): Promise<TData>;
+
+  <TData = unknown, TVariables = unknown, TContext = unknown>(
+    params: MutationObserverOptions<TData, ServerError, TVariables, TContext>,
+    options?: Partial<AsyncServiceMethodOptions>,
+  ): Promise<TData | undefined>;
+}
+
 export class MutationService {
   unsubscribe?: () => void;
   queryClient = queryClient;
@@ -40,8 +52,13 @@ export class MutationService {
     }
   }
 
-  /** Аналог useMutation */
-  fetch = async <
+  /**
+   * Аналог useMutation.
+   *
+   * С `rejectable: true` ошибка уходит в reject, поэтому результат
+   * всегда определён; без него промис резолвится в undefined.
+   */
+  fetch: MutationFetch = async <
     TData = unknown,
     TVariables = unknown,
     TContext = unknown,
