@@ -1,8 +1,9 @@
 
 import { ValueType } from "./types";
 
+// Когда ошибок нет, реализация не возвращает ничего (см. form-service.validate).
 export type ValidateFunction = 
-  (fieldValues: Record<string, ValueType<unknown>>, validationSchema: unknown) => Promise<Record<string, string>>;
+  (fieldValues: Record<string, ValueType<unknown>>, validationSchema: unknown) => Promise<Record<string, string> | undefined>;
 
 export type PreSubmitValidationFunction = 
   () => void;
